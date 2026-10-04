@@ -136,7 +136,7 @@ function answer(i){const q=state.quizzes[qi];const ok=i===q.correct;state.stats.
 function simulation(){el("screen").innerHTML=nav()+`<div class="card"><h2>🔌 Simulation</h2><p>Simulation is kept aside for now. We will expand it later.</p></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js");
+if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=9")}
 
 
 let tLevel=0;
