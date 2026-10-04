@@ -64,7 +64,7 @@ button{border:1px solid #d9e2f0;border-radius:14px}
 </style>
 </head>
 <body>
-<div id="splash" onclick="hideSplash()"><video id="splashvid" src="Video.Guru_20261004_044522845.mp4" autoplay muted playsinline></video></div>
+<div id="splash" onclick="hideSplash()"><video id="splashvid" src="Video.Guru_20261004_044522845.mp4" autoplay muted playsinline></video><div id="splfall" style="display:none;text-align:center;color:#fff"><img src="icon-192.png" alt="" style="width:120px;height:120px;border-radius:28px;margin:0 auto 14px;display:block"><div style="font-size:30px;font-weight:700">Robo<span style="color:#84cc16">Quest</span></div><div style="width:180px;height:10px;border-radius:6px;background:rgba(255,255,255,.2);margin:16px auto;overflow:hidden"><i id="splbar" style="display:block;height:100%;width:0;background:#84cc16;transition:width 2.2s linear"></i></div></div></div>
 <div class="app">
 <header><img class="banner" src="rq-banner.jpg" alt="RoboQuest"><div id="greeting"></div></header>
 <main id="screen"></main>
@@ -136,7 +136,7 @@ function answer(i){const q=state.quizzes[qi];const ok=i===q.correct;state.stats.
 function simulation(){el("screen").innerHTML=nav()+`<div class="card"><h2>🔌 Simulation</h2><p>Simulation is kept aside for now. We will expand it later.</p></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=9")}
+if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=10")}
 
 
 let tLevel=0;
@@ -146,7 +146,7 @@ function setRankImg(r,inp){const f=inp.files&&inp.files[0];if(!f)return;const fr
 function clearRankImg(r){readRanks();state.rankImgs[tLevel][r]="";save();teacher()}
 function saveRanks(){readRanks();save();alert("Rank names saved!")}
 function hideSplash(){const d=el("splash");if(d&&!d.classList.contains("hide")){d.classList.add("hide");setTimeout(()=>d.remove(),600)}}
-(function(){const v=el("splashvid");v.onended=hideSplash;v.onerror=hideSplash;setTimeout(hideSplash,10000);const p=v.play();if(p&&p.catch)p.catch(hideSplash)})();
+(function(){const v=el("splashvid");const fb=()=>{if(el("splfall")&&el("splfall").style.display==="none"){v.style.display="none";el("splfall").style.display="block";setTimeout(()=>{el("splbar").style.width="100%"},50);setTimeout(hideSplash,2400)}};v.onended=hideSplash;v.onerror=fb;setTimeout(hideSplash,10000);const p=v.play();if(p&&p.catch)p.catch(fb)})();
 </script>
 </body>
 </html>
