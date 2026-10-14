@@ -1,0 +1,33 @@
+(function(){
+const C=window.RQ_FIREBASE;if(!C||!C.apiKey||/^PASTE/.test(C.apiKey))return;
+const ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:9999;background:#0f172a;color:#fff;overflow:auto;padding:22px;font-size:16px";document.body.appendChild(ov);
+const e=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),$=id=>document.getElementById(id);
+const IN='style="width:100%;padding:14px;margin:6px 0;border-radius:10px;border:0;font-size:16px;box-sizing:border-box"',BT='style="width:100%;padding:14px;margin:6px 0;border-radius:10px;border:0;font-size:16px;font-weight:700;background:#84cc16;color:#1a2e05"',GH='style="width:100%;padding:14px;margin:6px 0;border-radius:10px;border:1px solid #64748b;font-size:16px;background:transparent;color:#fff"';
+const show=h=>{ov.style.display="block";ov.innerHTML=`<div style="max-width:420px;margin:30px auto">${h}</div>`},hide=()=>{ov.style.display="none"},msg=t=>{const m=$("rqm");if(m)m.textContent=t};
+show("<h2>🤖 RoboQuest</h2><p>Loading…</p>");
+if(!window.firebase){show(`<h2>🤖 RoboQuest</h2><p>Please connect to the internet to log in.</p><button ${BT} onclick="location.reload()">Try again</button>`);return}
+firebase.initializeApp(C);const auth=firebase.auth(),db=firebase.firestore(),U=id=>db.collection("users").doc(id);
+let me=null,prof=null,tm=null,signing=false;
+function loginScreen(){show(`<h2>🤖 RoboQuest</h2><p>Log in with your parent's email.</p><input id="rqe" type="email" placeholder="Email" ${IN}><input id="rqp" type="password" placeholder="Password" ${IN}><button ${BT} onclick="rqLogin()">Log in</button><button ${GH} onclick="rqReset()">Forgot password</button><button ${GH} onclick="rqSignupScreen()">New student? Sign up</button><p id="rqm" style="color:#fca5a5"></p>`)}
+window.rqSignupScreen=()=>show(`<h2>New student</h2><input id="rqn" placeholder="Student name" ${IN}><input id="rqe" type="email" placeholder="Parent email" ${IN}><input id="rqp" type="password" placeholder="Password (6+ letters)" ${IN}><input id="rqc" placeholder="Class code from your teacher" ${IN}><button ${BT} onclick="rqSignup()">Sign up</button><button ${GH} onclick="rqLoginScreen()">Back</button><p id="rqm" style="color:#fca5a5"></p>`);
+window.rqLoginScreen=loginScreen;
+window.rqLogin=()=>auth.signInWithEmailAndPassword($("rqe").value.trim(),$("rqp").value).catch(()=>msg("Wrong email or password."));
+window.rqReset=()=>{const m=$("rqe").value.trim();if(!m){msg("Type your email first.");return}auth.sendPasswordResetEmail(m).then(()=>msg("Reset email sent. Check your inbox.")).catch(()=>msg("Could not send. Check the email."))};
+window.rqSignup=()=>{const n=$("rqn").value.trim(),m=$("rqe").value.trim(),p=$("rqp").value,c=$("rqc").value.trim().toLowerCase();if(!n||!m||p.length<6||!c){msg("Fill every box. Password needs 6 or more letters.");return}
+ signing=true;auth.createUserWithEmailAndPassword(m,p).then(u=>U(u.user.uid).set({role:"student",approved:false,name:n,email:m,class:c,state:"",created:Date.now()}).catch(x=>{u.user.delete();throw{code:"bad-class"}})).then(()=>{signing=false;route()}).catch(x=>{signing=false;msg(x.code==="bad-class"?"That class code is not valid.":x.code==="auth/email-already-in-use"?"That email already has an account. Log in instead.":"Could not sign up. Try again.")})};
+const outBtn=()=>{if($("rqout"))return;const b=document.createElement("button");b.id="rqout";b.textContent="Log out";b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:9000;padding:8px 12px;border-radius:10px;border:0;opacity:.8";b.onclick=()=>auth.signOut().then(()=>location.reload());document.body.appendChild(b)};
+function route(){U(me.uid).get().then(d=>{prof=d.data();if(!prof){show("<h2>Account not ready</h2><p>Ask your teacher for help.</p>");outBtn();return}
+ outBtn();if(prof.role==="teacher"){const b=document.createElement("button");b.textContent="Students";b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:9000;padding:8px 12px;border-radius:10px;border:0;opacity:.9";b.onclick=teacherPanel;document.body.appendChild(b);teacherPanel();return}
+ if(!prof.approved){show(`<h2>⏳ Waiting</h2><p>Hi ${e(prof.name)}! Your teacher needs to approve your account. Try again later.</p><button ${BT} onclick="location.reload()">Check again</button>`);return}
+ student()}).catch(()=>{if(localStorage.rq_ok===me.uid){hide();outBtn()}else show(`<h2>No connection</h2><p>Connect to the internet and try again.</p><button ${BT} onclick="location.reload()">Try again</button>`)})}
+function student(){localStorage.rq_ok=me.uid;if(localStorage.rq_uid!==me.uid){if(prof.state)localStorage.setItem(KEY,prof.state);else localStorage.removeItem(KEY);localStorage.rq_uid=me.uid;location.reload();return}
+ if(!prof.state){state.child=prof.name;save()}
+ const _s=save;save=function(){_s();clearTimeout(tm);tm=setTimeout(()=>U(me.uid).update({state:localStorage.getItem(KEY),updated:Date.now()}).catch(()=>{}),2000)};hide();try{home()}catch(x){}}
+function teacherPanel(){show(`<h2>👩‍🏫 My students</h2><p>Loading…</p>`);
+ db.collection("users").where("class","==",prof.class).get().then(q=>{const rows=[];q.forEach(d=>{const v=d.data();if(v.role!=="student")return;let s={};try{s=JSON.parse(v.state||"{}")}catch(x){}
+  const st=(s.stars||[]).flat(2).filter(Boolean).length,an=s.stats&&s.stats.answered||0,co=s.stats&&s.stats.correct||0,w=s.stats&&s.stats.wins||0;
+  rows.push(`<div style="background:#1e293b;border-radius:12px;padding:12px;margin:8px 0"><b onclick="this.nextElementSibling.style.display='block'" style="cursor:pointer">${e(v.name)} ${v.approved?"✅":"⏳"}</b><div style="display:none;margin-top:8px">${e(v.email)}<br>⭐ ${st}/100 · ❓ ${co}/${an} correct · ⚔️ ${w} wins</div><button ${v.approved?GH:BT} onclick="rqApprove('${d.id}',${!v.approved})">${v.approved?"Remove access":"Approve"}</button></div>`)});
+  show(`<h2>👩‍🏫 My students</h2>${rows.join("")||"<p>No students yet.</p>"}<button ${BT} onclick="rqCloseT()">Open the app</button>`)}).catch(()=>show(`<h2>Could not load students</h2><p>Check your Firestore rules and that your account role is teacher.</p><button ${BT} onclick="rqCloseT()">Open the app</button>`))}
+window.rqApprove=(id,v)=>U(id).update({approved:v}).then(teacherPanel);window.rqCloseT=()=>{hide()};
+auth.onAuthStateChanged(u=>{me=u;if(signing)return;if(!u){loginScreen();return}route()});
+})();
