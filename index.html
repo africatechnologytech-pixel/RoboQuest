@@ -92,13 +92,13 @@ main.dk{background:linear-gradient(#0a1830,#0c2347);color:#eaf2ff;border-radius:
 .xtabs{display:flex;gap:8px;margin:6px 0}.xtabs button{flex:1;margin:0;min-height:46px;font-size:15px;font-weight:800}.xtabs button.on{background:#17324d;color:#fff;border-color:#17324d}
 @media(max-width:480px){.grid{grid-template-columns:1fr}}
 </style>
-</head>
+<style>#bottomnav button{font-size:10.5px;padding:2px 0}#bottomnav button span{font-size:19px}</style></head>
 <body>
 <div id="splash" onclick="hideSplash()"><video id="splashvid" src="Video.Guru_20261004_044522845.mp4" autoplay muted playsinline></video><div id="splfall" style="display:none;text-align:center;color:#fff"><img src="icon-192.png" alt="" style="width:120px;height:120px;border-radius:28px;margin:0 auto 14px;display:block"><div style="font-size:30px;font-weight:700">Robo<span style="color:#84cc16">Quest</span></div><div style="width:180px;height:10px;border-radius:6px;background:rgba(255,255,255,.2);margin:16px auto;overflow:hidden"><i id="splbar" style="display:block;height:100%;width:0;background:#84cc16;transition:width 2.2s linear"></i></div></div></div>
 <div class="app">
 <header><img class="banner" src="rq-banner.jpg" alt="RoboQuest"><div id="greeting"></div></header>
 <main id="screen"></main>
-<div id="bottomnav"><button onclick="home()"><span>🏠</span>Home</button><button onclick="progress()"><span>🏆</span>Progress</button><button onclick="mechatronics()"><span>🤖</span>Mechatronics</button><button onclick="electronics()"><span>⚡</span>Electronics</button><button onclick="openTeacher()"><span>🔒</span>Teacher</button></div>
+<div id="bottomnav"><button onclick="home()"><span>🏠</span>Home</button><button onclick="progress()"><span>🏆</span>Progress</button><button onclick="mechatronics()"><span>🤖</span>Mechatronics</button><button onclick="electronics()"><span>⚡</span>Electronics</button><button onclick="mechanical()"><span>⚙️</span>Mechanical</button><button onclick="openTeacher()"><span>🔒</span>Teacher</button></div>
 </div>
 <script>window.addEventListener("error",function(e){var d=document.getElementById("errbar");if(!d){d=document.createElement("div");d.id="errbar";d.style.cssText="position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;padding:10px;border-radius:12px;font:13px sans-serif;white-space:pre-wrap;max-height:40vh;overflow:auto";d.onclick=function(){d.remove()};document.body.appendChild(d)}var t=d.textContent.replace(/ - tap to close$/,"");if(t.split("\n").length<4)d.textContent=(t?t+"\n":"")+"⚠️ "+e.message+" (line "+e.lineno+")";d.textContent+=" - tap to close"});
 const BT={btn:"bt-battlebtn.jpg",bandana:"bt-bandana.jpg",banner:"bt-banner.jpg",win:"bt-win.jpg",lose:"bt-lose.jpg",box:"bt-box.jpg"};
@@ -559,5 +559,5 @@ bLoop=function(){const B=bat;if(!B||!B.live)return _bLoop0();if(B.done||!el("bti
  if(over){B.done=true;r.win=over==="win";if(!r.win)r.msg=B.mv>0?"Time ran out before the box reached B.":"The motor never got power. Hold the push button!";document.querySelectorAll("#bbtns button").forEach(b=>b.disabled=true);bResult();return}
  requestAnimationFrame(bLoop)};
 </script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=7"></script><script src="cloud.js?v=7"></script></body>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=8"></script><script src="cloud.js?v=8"></script></body>
 </html>
