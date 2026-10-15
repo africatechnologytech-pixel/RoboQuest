@@ -19,7 +19,7 @@ button{min-height:46px;border:1px solid var(--border);border-radius:12px;backgro
 .stars{display:flex;flex-wrap:wrap}.star{font-size:25px;border:0;background:transparent}
 input,textarea,select{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;margin:6px 0 12px;font-size:16px}
 img,video{max-width:100%;border-radius:12px;margin-top:10px}
-#splash{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .5s}#splash video{width:100%;height:100%;object-fit:contain;margin:0;border-radius:0}#splash.hide{opacity:0;pointer-events:none}
+#splash{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;transition:opacity .5s}#splash{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}#splash video{width:100%;height:100%;object-fit:contain;margin:0;border-radius:0;pointer-events:none}#splash.hide{opacity:0;pointer-events:none}
 header{background:#0f2a4a;padding:0}header .banner{display:block;width:100%;margin:0;border-radius:0}#greeting{padding:8px 16px;font-weight:700;color:#fff;background:linear-gradient(90deg,#1d4ed8,#16a34a)}
 main{padding-bottom:90px}
 .welcome{background:linear-gradient(135deg,#eaf2ff,#e8fbe9);border:2px solid #bcd3f5;border-radius:20px;padding:16px;margin:12px 0}
@@ -94,7 +94,7 @@ main.dk{background:linear-gradient(#0a1830,#0c2347);color:#eaf2ff;border-radius:
 </style>
 <style>#bottomnav button{font-size:10.5px;padding:2px 0}#bottomnav button span{font-size:19px}</style></head>
 <body>
-<div id="splash" onclick="hideSplash()"><video id="splashvid" src="Video.Guru_20261004_044522845.mp4" autoplay muted playsinline></video><div id="splfall" style="display:none;text-align:center;color:#fff"><img src="icon-192.png" alt="" style="width:120px;height:120px;border-radius:28px;margin:0 auto 14px;display:block"><div style="font-size:30px;font-weight:700">Robo<span style="color:#84cc16">Quest</span></div><div style="width:180px;height:10px;border-radius:6px;background:rgba(255,255,255,.2);margin:16px auto;overflow:hidden"><i id="splbar" style="display:block;height:100%;width:0;background:#84cc16;transition:width 2.2s linear"></i></div></div></div>
+<div id="splash" onclick="hideSplash()" oncontextmenu="return false"><video id="splashvid" src="Video.Guru_20261004_044522845.mp4" autoplay muted playsinline controlsList="nodownload nofullscreen noremoteplayback" disablePictureInPicture disableRemotePlayback oncontextmenu="return false"></video><div id="splfall" style="display:none;text-align:center;color:#fff"><img src="icon-192.png" alt="" style="width:120px;height:120px;border-radius:28px;margin:0 auto 14px;display:block"><div style="font-size:30px;font-weight:700">Robo<span style="color:#84cc16">Quest</span></div><div style="width:180px;height:10px;border-radius:6px;background:rgba(255,255,255,.2);margin:16px auto;overflow:hidden"><i id="splbar" style="display:block;height:100%;width:0;background:#84cc16;transition:width 2.2s linear"></i></div></div></div>
 <div class="app">
 <header><img class="banner" src="rq-banner.jpg" alt="RoboQuest"><div id="greeting"></div></header>
 <main id="screen"></main>
@@ -559,5 +559,5 @@ bLoop=function(){const B=bat;if(!B||!B.live)return _bLoop0();if(B.done||!el("bti
  if(over){B.done=true;r.win=over==="win";if(!r.win)r.msg=B.mv>0?"Time ran out before the box reached B.":"The motor never got power. Hold the push button!";document.querySelectorAll("#bbtns button").forEach(b=>b.disabled=true);bResult();return}
  requestAnimationFrame(bLoop)};
 </script>
-<script src="icons.js?v=11"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=11"></script><script src="cloud.js?v=11"></script></body>
+<script src="icons.js?v=12"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=12"></script><script src="cloud.js?v=12"></script></body>
 </html>
