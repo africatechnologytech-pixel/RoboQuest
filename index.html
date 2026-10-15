@@ -103,7 +103,7 @@ main.dk{background:linear-gradient(#0a1830,#0c2347);color:#eaf2ff;border-radius:
 <script>window.addEventListener("error",function(e){var d=document.getElementById("errbar");if(!d){d=document.createElement("div");d.id="errbar";d.style.cssText="position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;padding:10px;border-radius:12px;font:13px sans-serif;white-space:pre-wrap;max-height:40vh;overflow:auto";d.onclick=function(){d.remove()};document.body.appendChild(d)}var t=d.textContent.replace(/ - tap to close$/,"");if(t.split("\n").length<4)d.textContent=(t?t+"\n":"")+"⚠️ "+e.message+" (line "+e.lineno+")";d.textContent+=" - tap to close"});
 const BT={btn:"bt-battlebtn.jpg",bandana:"bt-bandana.jpg",banner:"bt-banner.jpg",win:"bt-win.jpg",lose:"bt-lose.jpg",box:"bt-box.jpg"};
 
-const KEY="roboquest_v1";
+let KEY="roboquest_v1";
 const defaults={
  child:"Inventor",
  stars:Array.from({length:5},()=>Array.from({length:4},()=>[false,false,false,false,false])),
@@ -559,5 +559,5 @@ bLoop=function(){const B=bat;if(!B||!B.live)return _bLoop0();if(B.done||!el("bti
  if(over){B.done=true;r.win=over==="win";if(!r.win)r.msg=B.mv>0?"Time ran out before the box reached B.":"The motor never got power. Hold the push button!";document.querySelectorAll("#bbtns button").forEach(b=>b.disabled=true);bResult();return}
  requestAnimationFrame(bLoop)};
 </script>
-<script src="icons.js?v=13"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=13"></script><script src="cloud.js?v=13"></script></body>
+<script src="icons.js?v=14"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=14"></script><script src="cloud.js?v=14"></script></body>
 </html>
