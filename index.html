@@ -220,7 +220,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v45";
+const RQCACHE="roboquest-v46";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -571,7 +571,7 @@ function arenaCard(){const a=state.arenas[0];return `<div class="card"><h3>⚔�
 
 /* ===== MECHATRONICS: pick a machine + a circuit, then arrange them on the Map ===== */
 const _drawM0=drawM,_openSub0=openSub,_mDown0=mDown,_mMove0=mMove,_mUp0=mUp,_delP0=delProject,_sim0=simulation,_newP0=newProject,_solve0=solveMech,_mRun0=mRun;
-let MAPON=false,MV="elec",_cc={k:"",r:null,m:null};const ACC=["led","btn","pot","dcm"];
+let MAPON=false,MV="elec",_cc={k:"",r:null,m:null};const ACC=["led","btn","pot","dcm","servo","us","ldr"];
 const uidOf=p=>p.uid||(p.uid="u"+Math.random().toString(36).slice(2,10));
 const EMPTYP=n=>({name:n,type:"m",parts:[],wires:[],bonds:[],nid:1});
 const WC={},BP={};let _ai=0;
@@ -602,10 +602,10 @@ function motorsOf(H){syncMap(H);const cr=circuitRes(H.e),out=[];H.map.forEach(m=
  out.push({id:"mt"+e.id,t:"motor",i:Math.round(m.x/LP),j:Math.round(m.y/LP),rpm:60,dir:1,_on:true,_rpm:Math.min(MAXRPM,30*Math.abs(v)),_dir:v>=0?1:-1})});return out}
 applyCircuit=function(h){return circuitMotor(h.e)};
 function withBtns(p,f){const old=p.e.parts.map(o=>o.on);p.e.parts.forEach(o=>{if(o.t==="btn")o.on=true});try{return f()}finally{p.e.parts.forEach((o,k)=>{o.on=old[k]})}}
-machineFor=function(proj){if(proj.type!=="x")return proj;return withBtns(proj,()=>{const m=JSON.parse(JSON.stringify(proj.m));m.type="m";m.parts=m.parts.filter(o=>o.t!=="motor").concat(motorsOf(proj));m._cm=circuitMotor(proj.e);return m})};
+machineFor=function(proj){if(proj.type!=="x")return proj;return withBtns(proj,()=>{const m=JSON.parse(JSON.stringify(proj.m));m.type="m";m.parts=m.parts.filter(o=>o.t!=="motor").concat(motorsOf(proj),servosOf(proj));m._cm=circuitMotor(proj.e);return m})};
 function rollFree(){const R=sim.mres;if(!R||R.jam||!R.car||!R.car.wid)return;const d=sim.p.parts.find(o=>o.id===R.car.wid),wd=R.rot[R.car.wid]&&R.rot[R.car.wid].w;if(!d||!wd)return;
  (R.rows||[]).forEach(r=>{if(r.g.t==="wheel"&&!r.driven&&R.rot[r.g.id]){const w=wd*rr(d)/rr(r.g);R.rot[r.g.id].w=w;r.w=w}})}
-solveMech=function(){let r;if(MAPON&&sim.host&&sim.p===sim.host.m){const keep=sim.p.parts;sim.p.parts=keep.filter(o=>o.t!=="motor").concat(motorsOf(sim.host));try{r=_solve0()}finally{sim.p.parts=keep}}else r=_solve0();rollFree();return r};
+solveMech=function(){let r;if(MAPON&&sim.host&&sim.p===sim.host.m){const keep=sim.p.parts;sim.p.parts=keep.filter(o=>o.t!=="motor").concat(motorsOf(sim.host),servosOf(sim.host));try{r=_solve0()}finally{sim.p.parts=keep}}else r=_solve0();rollFree();return r};
 mRun=function(){sim.cb=0;_cc.k="";if(MAPON&&sim.host)sim.host.e.parts.forEach(o=>{if(o.t==="btn")o.on=false});_mRun0()};
 function mapRetrigger(){const cg=el("car"),t=/translate\(\s*(-?[\d.]+)/.exec(cg.getAttribute("transform")||""),x=t?+t[1]:0;sim.cinfo=applyCircuit(sim.host);solveMech();sim.cb=x;sim.t0=performance.now();_cc.k="";drawM()}
 function mvSet(m){MV=m;drawM()}
@@ -615,12 +615,12 @@ function pieceSVG(m,e,c,on,burnt,sel){const x=m.x,y=m.y,rt=`rotate(${(m.rot||0)*
  if(e.t==="led")f=(on?`<circle cx="${x}" cy="${y}" r="17" fill="${c}" opacity=".3" pointer-events="none"/>`:"")+`<g pointer-events="none" fill-opacity="${on?1:.55}" transform="${rt}"><line x1="${x-3}" y1="${y+6}" x2="${x-3}" y2="${y+14}" stroke="#64748b" stroke-width="2"/><line x1="${x+3}" y1="${y+6}" x2="${x+3}" y2="${y+14}" stroke="#64748b" stroke-width="2"/><rect x="${x-9}" y="${y+3}" width="18" height="3.5" rx="1.5" fill="${burnt?"#6b7280":c}" stroke="#334155" stroke-width="1.5"/><path d="M${x-6} ${y+3} L${x-6} ${y-3} A6 6 0 0 1 ${x+6} ${y-3} L${x+6} ${y+3} Z" fill="${burnt?"#6b7280":c}" stroke="#334155" stroke-width="1.5"/></g>`;
  else if(e.t==="btn")f=`<g pointer-events="none" transform="${rt}"><rect x="${x-10}" y="${y-10}" width="20" height="20" rx="4" fill="#64748b" stroke="#334155" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="5.5" fill="${e.on?"#22c55e":"#ef4444"}" stroke="#7f1d1d"/></g>`;
  else if(e.t==="dcm"){back=`<g transform="${rt}" pointer-events="none"><line x1="${x+42}" y1="${y-5}" x2="${x+55}" y2="${y-8}" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/><line x1="${x+42}" y1="${y+5}" x2="${x+55}" y2="${y+8}" stroke="#111827" stroke-width="2.5" stroke-linecap="round"/><rect x="${x+4}" y="${y-11}" width="38" height="22" rx="6" fill="#cbd5e1" stroke="#475569" stroke-width="2"/><rect x="${x+30}" y="${y-11}" width="12" height="22" rx="5" fill="#2563eb" stroke="#1e3a8a" stroke-width="2"/><line x1="${x+12}" y1="${y-8}" x2="${x+12}" y2="${y+8}" stroke="#94a3b8" stroke-width="2"/><line x1="${x+18}" y1="${y-8}" x2="${x+18}" y2="${y+8}" stroke="#94a3b8" stroke-width="2"/><rect x="${x-2}" y="${y-3}" width="8" height="6" fill="#64748b"/></g>`;f=`<circle cx="${x}" cy="${y}" r="7" fill="#fde047" stroke="#854d0e" stroke-width="2" pointer-events="none"/>`}
- else f=`<g pointer-events="none"><circle cx="${x}" cy="${y}" r="9" fill="#a78bfa" stroke="#4c1d95" stroke-width="1.5"/><line x1="${x}" y1="${y}" x2="${x+5}" y2="${y-5}" stroke="#fff" stroke-width="2"/></g>`;
+ else if(e.t==="servo")f=`<g pointer-events="none" transform="${rt}"><rect x="${x-14}" y="${y-9}" width="28" height="18" rx="3" fill="#2563eb" stroke="#1e3a8a" stroke-width="1.5"/><circle cx="${x+5}" cy="${y}" r="5" fill="#e2e8f0" stroke="#475569"/><line x1="${x+5}" y1="${y}" x2="${x+5}" y2="${y-9}" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/></g>`;else if(e.t==="us")f=`<g pointer-events="none" transform="${rt}"><rect x="${x-16}" y="${y-9}" width="32" height="18" rx="3" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="1.5"/><circle cx="${x-7}" cy="${y}" r="5.5" fill="#cbd5e1" stroke="#475569"/><circle cx="${x+7}" cy="${y}" r="5.5" fill="#cbd5e1" stroke="#475569"/></g>`;else if(e.t==="ldr")f=`<g pointer-events="none" transform="${rt}"><circle cx="${x}" cy="${y}" r="10" fill="#fde68a" stroke="#92400e" stroke-width="1.5"/><path d="M${x-6} ${y-3} q3 -3 6 0 t6 0 M${x-6} ${y+3} q3 3 6 0 t6 0" fill="none" stroke="#92400e" stroke-width="1.5"/></g>`;else f=`<g pointer-events="none"><circle cx="${x}" cy="${y}" r="9" fill="#a78bfa" stroke="#4c1d95" stroke-width="1.5"/><line x1="${x}" y1="${y}" x2="${x+5}" y2="${y-5}" stroke="#fff" stroke-width="2"/></g>`;
  return{back:back?`<g data-pcb="${m.id}">${back}</g>`:"",front:`<g data-pc="${m.id}" style="cursor:grab;pointer-events:${MV==="elec"?"auto":"none"}">${hit}${f}${ring}</g>`}}
 function mapDraw(l){
  if(!sim.host||!MAPON||sim.p.type!=="m")return;
  const H=sim.host,car=el("car"),sp=el("spanel"),hasC=H.e.parts.some(o=>o.t==="bat");
- if(sp)sp.style.display="none";el("sv").style.touchAction="none";
+ if(sp)sp.style.display="none";if(!sim.run){const ml=el("mlive");if(ml)ml.innerHTML=""}el("sv").style.touchAction="none";
  document.querySelectorAll(".shopwrap button").forEach(b=>{if(/Shop/.test(b.textContent))b.style.display="none"});
  const sb=document.querySelector(".simbar");if(sb)sb.style.display="none";
  sim.p.parts.filter(o=>o.t==="motor").forEach(o=>{const n=document.querySelector(`[data-mp="${o.id}"]`);if(n)n.remove()});
@@ -634,7 +634,7 @@ function mapDraw(l){
  H.map.forEach(m=>{const e=acc.find(q=>q.id===m.id),r=cr&&cr.leds&&cr.leds[m.id],on=sim.run&&r&&!r.burnt&&r.I>0.0005,o=pieceSVG(m,e,LEDC[e.color||"red"][0],on,r&&r.burnt,sim.psel===m.id&&MV==="elec");back+=o.back;g+=o.front});
  if(back)car.insertAdjacentHTML("afterbegin",back);car.insertAdjacentHTML("beforeend",g)}
 mDown=function(e){if(!(MAPON&&sim.host))return _mDown0(e);const H=sim.host,c=e.target.closest&&e.target.closest("[data-pc]"),b=e.target.closest&&e.target.closest("[data-box]");
- if(sim.run){if(c){const o=H.e.parts.find(q=>q.id===c.getAttribute("data-pc"));if(o&&o.t==="btn"){o.on=!o.on;mapRetrigger();e.preventDefault();return}}return _mDown0(e)}
+ if(sim.run){if(c){const o=H.e.parts.find(q=>q.id===c.getAttribute("data-pc"));if(o&&o.t==="btn"){o.on=!o.on;mapRetrigger();e.preventDefault();return}if(o&&(o.t==="pot"||o.t==="us"||o.t==="ldr")){liveShow(o);e.preventDefault();return}}return _mDown0(e)}
  if(MV!=="elec"||!H.mounted)return _mDown0(e);
  e.preventDefault();try{el("sv").setPointerCapture(e.pointerId)}catch(x){}const id=c?c.getAttribute("data-pc"):b?"box":null,prev=sim.psel;sim.psel=c?id:null;const m=c&&H.map.find(z=>z.id===id);if(m)m.fid=null;
  const sx=m?m.x:H.box.x,sy=m?m.y:H.box.y;if(prev!==sim.psel||m)drawM();
@@ -697,12 +697,16 @@ s.addEventListener("pointerdown",e=>{s.setPointerCapture(e.pointerId);s._d=1;set
 s.addEventListener("pointermove",e=>{if(s._d)setTo(e.clientY)});
 const up=()=>{s._d=0};s.addEventListener("pointerup",up);s.addEventListener("pointercancel",up);
 addEventListener("scroll",place,{passive:true});
-setInterval(()=>{const on=!!document.getElementById("sv")&&de().scrollHeight>innerHeight+40;s.style.display=on?"block":"none";if(on)place()},400)})();
+setInterval(()=>{const on=!!document.getElementById("sv")&&!(typeof sim==="object"&&sim&&sim.tog);s.style.display=on?"block":"none";if(on)place()},400)})();
 
-const CDT=0.05,RQAPPV="2G";
+const CDT=0.05,RQAPPV="3G";
 function motorStrip(mo){const run=mo&&mo.rpm>0&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
+
+function servosOf(H){syncMap(H);const cr=circuitRes(H.e),out=[];H.map.forEach(m=>{const e=H.e.parts.find(q=>q.id===m.id);if(!e||e.t!=="servo")return;const v=cr&&cr.servos&&cr.servos[e.id];out.push({id:"sv"+e.id,t:"servo",i:Math.round(m.x/LP),j:Math.round(m.y/LP),ang:v?v.ang:(e.ang===undefined?90:e.ang)})});return out}
+function liveShow(o){let d=el("mlive");if(!d){el("sv").insertAdjacentHTML("afterend",'<div id="mlive"></div>');d=el("mlive")}const k=o.t==="pot"?"pos":o.t==="us"?"dist":"light",mx=o.t==="us"?100:100,v=o[k]===undefined?(o.t==="us"?60:50):o[k],nm=o.t==="pot"?"🎚️ Potentiometer":o.t==="us"?"📡 Object distance (cm)":"🔆 Light (%)";d.innerHTML=`<div class="card"><h3>${nm}: <b id="mlv">${Math.round(v)}</b></h3><input type="range" style="width:100%;height:44px" min="0" max="${mx}" value="${v}" oninput="liveSet('${o.id}','${k}',this.value)"></div>`}
+function liveSet(id,k,v){const o=sim.host.e.parts.find(q=>q.id===id);if(!o)return;o[k]=+v;const l=el("mlv");if(l)l.textContent=v;_cc.k="";mapRetrigger()}
 </script>
 <script src="icons.js?v=35"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=35"></script><script src="cloud.js?v=35"></script></body>
 </html>
