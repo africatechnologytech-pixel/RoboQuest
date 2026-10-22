@@ -233,7 +233,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v71";
+const RQCACHE="roboquest-v72";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -737,12 +737,12 @@ arenaScreen=function(i){invW();_ai=i;_arena0(i);
 /* ===== BATTLE: circuit on the car, push buttons pressed during the fight, struggling ===== */
 const _fight0=fight,_bLoop0=bLoop;
 function bRecalc(){const B=bat,p=B.proj,old=p.e.parts.map(o=>o.on);p.e.parts.forEach(o=>{if(o.t==="btn")o.on=!!(B.bp[o.id]||B.padOn)});
- try{B.cr=circuitRes(p.e);B.cm=circuitMotor(p.e)}finally{p.e.parts.forEach((o,k)=>{o.on=old[k]})}B.pw=!!(B.cm&&B.cm.rpm>0.5)}
+ try{B.cr=circuitRes(p.e);B.cm=circuitMotor(p.e);p.e.parts.forEach(o=>{if(o.t==="btn")o.on=true});B.crS=circuitRes(p.e)}finally{p.e.parts.forEach((o,k)=>{o.on=old[k]})}B.pw=!!(B.cm&&B.cm.rpm>0.5)}
 function battleDraw(){const B=bat,H=B.proj,car=el("car");if(!car)return;
  document.querySelectorAll('[data-mp^="mt"]').forEach(n=>n.remove());
  const acc=syncMap(H),cr=B.cr,bx=H.box.x,by=H.box.y,cy=by+17;let back="",g="";
  if(H.mounted)g+=`<rect x="${bx}" y="${by}" width="84" height="34" rx="8" fill="#16a34a" stroke="#14532d" stroke-width="2"/><circle cx="${bx+12}" cy="${cy}" r="4" fill="${B.pw?"#22c55e":"#94a3b8"}" stroke="#fff"/><text class="keep" x="${bx+52}" y="${cy-1}" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">🔋 Power</text><text class="keep" x="${bx+52}" y="${cy+11}" font-size="9" fill="#dcfce7" text-anchor="middle">${B.pw?"ON":"OFF"}</text>`;
- H.map.forEach(m=>{const e=acc.find(q=>q.id===m.id);if(!e||e.t==="btn"||e.t==="pot"||(e.t==="servo"&&!mAttached(H,m)))return;const r=cr&&cr.leds&&cr.leds[m.id],on=r&&!r.burnt&&r.I>0.0005,o=pieceSVG(m,e,LEDC[e.color||"red"][0],on,r&&r.burnt,false);back+=o.back;g+=o.front});
+ H.map.forEach(m=>{const e=acc.find(q=>q.id===m.id);if(!e||e.t==="btn"||e.t==="pot"||e.t==="servo")return;const r=cr&&cr.leds&&cr.leds[m.id],on=r&&!r.burnt&&r.I>0.0005,o=pieceSVG(m,e,LEDC[e.color||"red"][0],on,r&&r.burnt,false);back+=o.back;g+=o.front});
  if(back)car.insertAdjacentHTML("afterbegin",`<g pointer-events="none">${back}</g>`);car.insertAdjacentHTML("beforeend",`<g pointer-events="none">${g}</g>`)}
 fight=function(ai,pk){_fight0(ai,pk);const p=state.projects[pk],B=bat;if(!p||p.type!=="x"||!B||!B.r.cm)return;
  B.live=true;B.proj=p;B.bp={};B.mv=0;B.w=0;B.go=false;
@@ -806,7 +806,14 @@ function rdPot(){const B=bat,d=el("potside");const P=B.proj.e.parts.filter(q=>q.
  side.querySelector("button").addEventListener("pointerdown",e=>{e.preventDefault();B.pi=(B.pi+1)%P.length;rdPot()});
  const t=el("ptrack"),set=e=>{const r=t.getBoundingClientRect(),f=Math.max(0,Math.min(1,(r.bottom-e.clientY)/Math.max(1,r.height))),v=Math.round(f*100);o.pos=v;el("pfill").style.height=v+"%";el("pthumb").style.bottom=v+"%";el("pval").textContent=v+"%";bRecalc()};
  t.addEventListener("pointerdown",e=>{try{t.setPointerCapture(e.pointerId)}catch(x){}t._d=1;set(e);e.preventDefault()});t.addEventListener("pointermove",e=>{if(t._d)set(e)});const up=()=>{t._d=0};t.addEventListener("pointerup",up);t.addEventListener("pointercancel",up)}
-function bSyncServos(){const B=bat,H=B.proj;if(!B.cr||!B.cr.servos||!sim||!sim.p)return;H.map.forEach(m=>{const e=H.e.parts.find(q=>q.id===m.id);if(!e||e.t!=="servo")return;const v=B.cr.servos[e.id];if(!v)return;const i=Math.round(m.x/LP),j=Math.round(m.y/LP);sim.p.parts.forEach(o=>{if(o.t==="servo"&&o.i===i&&o.j===j&&o.ang!==v.ang)o.ang=v.ang})})}
+function rdTip(B){const car=el("car");if(!car)return null;const gy=B.start[1]+17,y0=gy-34,y1=gy-1,sg=B.sg;let best=null;let inv;try{inv=car.getCTM().inverse()}catch(x){return null}
+ const clip=(pts,yy,keepBelow)=>{const o=[];for(let k=0;k<pts.length;k++){const a=pts[k],b=pts[(k+1)%pts.length],ia=keepBelow?a.y<=yy:a.y>=yy,ib=keepBelow?b.y<=yy:b.y>=yy;if(ia)o.push(a);if(ia!==ib){const t=(yy-a.y)/(b.y-a.y);o.push({x:a.x+t*(b.x-a.x),y:yy})}}return o};
+ car.querySelectorAll("rect,circle,ellipse,path,polygon").forEach(n=>{if(n.closest('[pointer-events="none"]')||n.closest("defs"))return;const f=n.getAttribute("fill");if(f==="transparent"||n.getAttribute("class")==="hd")return;let bb;try{bb=n.getBBox()}catch(x){return}if(bb.width<9&&bb.height<9)return;let M;try{M=inv.multiply(n.getCTM())}catch(x){return}
+  let pts=[[bb.x,bb.y],[bb.x+bb.width,bb.y],[bb.x+bb.width,bb.y+bb.height],[bb.x,bb.y+bb.height]].map(q=>({x:M.a*q[0]+M.c*q[1]+M.e,y:M.b*q[0]+M.d*q[1]+M.f}));
+  pts=clip(pts,y0,false);if(pts.length)pts=clip(pts,y1,true);pts.forEach(p=>{const v=sg*p.x;if(best===null||v>best)best=v})});
+ return best}
+function rdMeasure(B){const t=rdTip(B);B.noTip=t===null;if(t===null)return;if(B.tip0===undefined){B.tip0=t;const bb=bboxParts(B.r.simp.parts),fo=B.sg>0?bb.x1:bb.x0;B.start[0]+=B.sg*(t-B.sg*fo)}B.off=t-B.tip0}
+function bSyncServos(){const B=bat,H=B.proj,R=B.crS||B.cr;if(!R||!R.servos||!sim||!sim.p)return;H.map.forEach(m=>{const e=H.e.parts.find(q=>q.id===m.id);if(!e||e.t!=="servo")return;const v=R.servos[e.id];if(!v)return;const i=Math.round(m.x/LP),j=Math.round(m.y/LP);sim.p.parts.forEach(o=>{if(o.t==="servo"&&o.i===i&&o.j===j&&o.ang!==v.ang)o.ang=v.ang})})}
 function rdBox(x,y,m){return `<g><rect x="${x-17}" y="${y-17}" width="34" height="34" rx="4" fill="#d6a56b" stroke="#7c4a1e" stroke-width="2"/><line x1="${x-17}" y1="${y-6}" x2="${x+17}" y2="${y-6}" stroke="#7c4a1e"/><text class="keep" x="${x}" y="${y+10}" font-size="10" text-anchor="middle" font-weight="700" fill="#4a2c0f">${m} kg</text></g>`}
 function rdDraw(){const B=bat,sv=el("sv"),sg=B.sg,X=f=>B.start[0]+sg*f,Y=B.start[1],gy=Y+17,du=B.du,
  fl=(x,col,txt)=>`<line x1="${x}" y1="${Y-34}" x2="${x}" y2="${Y+14}" stroke="#cbd5e1" stroke-width="3"/><path d="M${x} ${Y-34} l${22*sg} 8 l${-22*sg} 8z" fill="${col}"/><text class="keep" x="${x-4}" y="${gy+28}" font-size="13" font-weight="700" fill="#eaf2ff">${txt}</text>`,st=10/CMU;let h="";
@@ -820,18 +827,18 @@ bLoop=function(){const B=bat;if(!B||!B.road){const q=_bLoop1();if(B&&B.mshake&&!
  const now=performance.now(),a=B.a,r=B.r,c=r.cm,du=B.du,Tlim=a.time/SPD,need=c.need||r.Freq;
  if(!B.go){B.go=true;B.last=now;document.querySelectorAll("#bbtns button,#rdpad button").forEach(b=>b.disabled=false)}
  const dt=Math.min(0.1,(now-B.last)/1000)*B.ts;B.last=now;B.pt+=dt;
- const want=(B.pw&&B.ch[B.ci].t==="motor"&&B.ch[B.ci]===B.ch.find(q=>q.t==="motor"))?B.padDir:0,contact=want>0&&B.ph!==2&&B.Pf>=B.fb-0.5;let f=0;
+ const want=(B.pw&&B.ch[B.ci].t==="motor"&&B.ch[B.ci]===B.ch.find(q=>q.t==="motor"))?B.padDir:0,contact=want>0&&B.ph!==2&&!B.noTip&&B.Pf+(B.off||0)>=B.fb-0.5;let f=0;
  if(want){f=contact?(c.fOK?1:(B.g||0)):1;B.T+=dt*f*want}
- let P=B.v0*B.T;const hi=B.ph===3?du-38:du;if(P>hi){P=hi;B.T=P/B.v0}if(P<-30){P=-30;B.T=P/B.v0}B.Pf=P;
+ let P=B.v0*B.T;const hi=(B.ph===3?du-38:du)-(B.off||0);if(P>hi){P=hi;B.T=P/B.v0}if(P<-30){P=-30;B.T=P/B.v0}B.Pf=P;
  const strain=contact&&B.pw&&(!c.fOK||c.F/need<1.25);
  let note="";
- if(B.ph!==2&&P>B.fb)B.fb=P;
+ if(B.ph!==2&&!B.noTip&&P+(B.off||0)>B.fb)B.fb=P+(B.off||0);
  const pay=()=>{const q=100+Math.round(50*Math.max(0,1-B.pt/Tlim));B.pts+=q;B.pt=0;return q};
  if(B.ph===1&&B.fb>=du-0.5){B.fb=du;const q=pay();B.ph=2;rdFlash("📦 Delivered! +"+q+" ⭐ Now drive back to A")}
  else if(B.ph===2&&P<=0.5){const q=pay();B.ph=3;B.fb=0;rdFlash("🎁 A new box! +"+q+" ⭐")}
  else if(B.ph===3&&B.fb>=du-38-0.5){const q=pay();B.done=true;r.win=true;r.msg="";B.rdwin=true}
  let over=B.done?"win":(B.pt>=Tlim?"time":"");
- sim.t0=now-B.T*1000;bSyncServos();drawM(true);rdDraw();rdCam();
+ sim.t0=now-B.T*1000;bSyncServos();drawM(true);rdMeasure(B);rdDraw();rdCam();
  if(strain&&!over){const cg=el("car"),m=/translate\(\s*(-?[\d.]+)/.exec(cg.getAttribute("transform")||""),x=m?+m[1]:0;cg.setAttribute("transform",`translate(${(x+Math.sin(now/35)*1.8).toFixed(1)} ${(Math.sin(now/29)*0.8).toFixed(1)})`)}
  const hasB=B.proj.e.parts.some(o=>o.t==="btn");
  el("btimer").textContent=`Part ${Math.min(B.ph,3)} of 3: ${RDN[Math.min(B.ph,3)]}  ·  ⏱️ ${Math.min(B.pt*SPD,a.time).toFixed(1)} s of ${a.time} s  ·  ⭐ ${B.pts}  ·  ${B.pw?(strain?"😤 Straining!":"⚡ Powered"):"Hold Front or Back"}`;
@@ -852,7 +859,7 @@ const up=()=>{s._d=0;s.classList.remove("on")};s.addEventListener("pointerup",up
 addEventListener("scroll",place,{passive:true});
 setInterval(()=>{const on=!!document.getElementById("sv");s.style.display=on?"block":"none";if(on)place();const sv0=document.getElementById("sv");if(sv0)sv0.classList.toggle("mechsv",typeof sim==="object"&&!!sim&&!!sim.p&&sim.p.type==="m")},400)})();
 
-const CDT=0.05,RQAPPV="27H";
+const CDT=0.05,RQAPPV="28H";
 function motorStrip(mo){const run=mo&&Math.abs(mo.v)>=0.5&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
