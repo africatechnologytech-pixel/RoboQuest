@@ -1,4 +1,4 @@
-const VER="38H",CACHE="roboquest-v82",MEDIA="roboquest-media";
+const VER="39H",CACHE="roboquest-v83",MEDIA="roboquest-media";
 const VIDEO="Video.Guru_20261004_044522845.mp4";
 const SHELL=["./","index.html","icons.js?v=35","firebase-config.js?v=35","cloud.js?v=35","manifest.json"];
 self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.open(CACHE);
