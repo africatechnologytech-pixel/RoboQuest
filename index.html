@@ -233,7 +233,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v81";
+const RQCACHE="roboquest-v82";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -921,7 +921,7 @@ bLoop=function(){const B=bat;if(!B||!B.road){const q=_bLoop1();if(B&&B.mshake&&!
  if(B.hit){const w=B.hit;B.hit=null;B.hearts--;if(B.hearts>0){const cx=B.cpx||0;B.T=cx/B.v0;B.Pl=cx;if(B.ph!==2)B.fb=cx>0?cx+(B.off||0):0;B.bh=0;B.sup=null;B.hook=null;B.grip=null;B.hookLock=null;B.gripLock=null;B.dropPid=null;rdFlash("💔 "+w+" Back to the checkpoint")}}
  if(!B.mm)rdInitMotors(B);const selM=B.ch[B.ci],isMot=!!selM&&selM.t==="motor",selKey=isMot&&selM.id?"mt"+selM.id:null,isPrim=isMot&&(!selKey||!B.prim||selKey===B.prim||!B.mm[selKey]),want=(B.pw&&isPrim)?B.padDir:0,contact=want>0&&B.ph!==2&&!B.noTip&&B.Pf+(B.off||0)>=B.fb-0.5;let f=0;
  if(want){f=contact?(c.fOK?1:(B.g||0)):1;B.T+=dt*f*want*(B.lg||1)}
- let P=B.v0*B.T;const hi=(B.ph===3?du-38:du)-(B.off||0);if(P>hi){P=hi;B.T=P/B.v0}if(P<-30){P=-30;B.T=P/B.v0}B.Pf=P;
+ let P=B.v0*B.T;const hi=(B.ph===3?du-38:du)-(B.off||0);if(P>hi){P=hi;B.T=P/B.v0}if(P<-30){P=-30;B.T=P/B.v0}if(B.obs){const P0=P;P=rdObStep(B,P,dt);if(P!==P0)B.T=P/B.v0}B.Pf=P;
  const strain=contact&&B.pw&&(!c.fOK||c.F/need<1.25);
  let note="";
  const mvd=B.Pl===undefined||P>B.Pl+1e-6;B.Pl=P;if(B.ph!==2&&!B.noTip&&mvd&&!B.grip&&!B.hook&&P+(B.off||0)>B.fb)B.fb=P+(B.off||0);
@@ -943,6 +943,74 @@ bLoop=function(){const B=bat;if(!B||!B.road){const q=_bLoop1();if(B&&B.mshake&&!
   const rc=document.querySelector("#bres .rescard p");if(rc)rc.textContent=r.win?`Your machine pushed the box to B, drove back, and delivered a second box. ${B.pts} ⭐ points!`:`${r.msg} You scored ${B.pts} ⭐ so far.`;return}
  requestAnimationFrame(bLoop)};
 
+/* ===== 38H: STAGE 2 - SIMPLE OBSTACLES (popping wall, lowering ceiling, heavier box). Only runs in the Mechatronics road battle, and only for obstacles the teacher switched on. ===== */
+const RDOB_WALL_W=10,RDOB_WALL_H=64,RDOB_CEIL_LEN=60,RDOB_CEIL_MIN=68,RDOB_RUN_CM=1,RDOB_FAST=1.4,RDOB_SEE=90,RDOB_LIFT=["arm","pincher","rack","brick"];
+const _fight38=fight,_rdDraw38=rdDraw;
+function rdObOn(B,k){return rdObsOn(B.aBase||B.a,k)}
+function rdObRunPx(hi){return Math.min(RDOB_RUN_CM/CMU,hi*0.3)}
+function rdObRecalc(B){const keep=sim;try{const r3=evalBattle(B.proj,B.a),c3=r3&&r3.cm,c=B.r&&B.r.cm;if(!c3||!c||c3.kind!=="car")return;c.fOK=c3.fOK;c.need=c3.need;if(!c3.fOK){const q=c3.F/Math.max(0.01,c3.need||r3.Freq);B.g=(q>=0.5&&!c3.slip)?0.35*(q-0.5)/0.5:0}}catch(e){}finally{sim=keep}}
+function rdObGen(B,P){const O=B.obs,ph=B.ph;O.ph=ph;O.list=[];O.R=0;O.Pp=P;
+ if(B.a.mass!==B.aBase.mass){B.a.mass=B.aBase.mass;rdObRecalc(B)}
+ if(ph!==1&&ph!==3)return;
+ const hi=ph===3?B.du-38:B.du,run=rdObRunPx(hi),fl=[.25,.5,.75].map(f=>hi*f),pl=[];
+ ["wall","ceil","heavy"].filter(k=>rdObOn(B,k)).sort(()=>Math.random()-.5).forEach(k=>{
+  const len=k==="ceil"?RDOB_CEIL_LEN:k==="wall"?RDOB_WALL_W:6,lo=k==="wall"?21+run+10:k==="ceil"?30:hi*0.2,mx=k==="ceil"?hi-RDOB_CEIL_LEN-20:hi-30;
+  if(mx<lo)return;
+  for(let t=0;t<60;t++){const x=lo+Math.random()*(mx-lo);if(pl.every(p=>x+len+26<=p.x||p.x+p.len+26<=x)&&(k==="ceil"||fl.every(f=>Math.abs(f-(x+len/2))>=len/2+6))){pl.push({x,len,k});break}}});
+ pl.sort((a,b)=>a.x-b.x).forEach(p=>{
+  if(p.k==="wall")O.list.push({k:"wall",x:p.x,st:"hid",t0:0});
+  else if(p.k==="ceil")O.list.push({k:"ceil",x:p.x,len:p.len,st:"hid",t0:0,C:RDOB_CEIL_MIN});
+  else{const m=B.aBase.mass;O.list.push({k:"heavy",x:p.x,m2:Math.max(m+0.5,Math.round(m*3)/2),st:"hid",on:false})}})}
+function rdObClear(B){let top=1e9;const gy=B.start[1]+17,PP=(sim&&sim.p&&sim.p.parts)||[];try{rdPolys().forEach(p=>{const pt=PP.find(q=>q.id===p.id);if(!pt||RDOB_LIFT.includes(pt.t))return;p.pts.forEach(q=>{if(q.y<top)top=q.y})})}catch(e){}return Math.max(RDOB_CEIL_MIN,top<1e8?gy-top+10:0)}
+function rdObCeil(B,o,P,Pp,off){const sg=B.sg,gy=B.start[1]+17,c0=o.x,c1=o.x+o.len,fb2=Math.max(B.fb,P+off);
+ if(fb2+17>c0&&fb2-17<c1&&(PAL+BXH+(B.bh||0))>o.C)return"box";
+ const a=B.start[0]+sg*c0,b=B.start[0]+sg*c1,sh=sg*(P-Pp),xa=Math.min(a,b)-sh,xb=Math.max(a,b)-sh;let top=1e9;
+ rdPolys().forEach(p=>{clipStrip(p.pts,xa,xb).forEach(q=>{if(q.y<top)top=q.y})});
+ return top<1e8&&gy-top>o.C?"arm":null}
+function rdObStep(B,P,dt){const O=B.obs;if(!O||B.done)return P;
+ if(O.ph!==B.ph)rdObGen(B,P);
+ const now=performance.now(),off=B.off||0,Pp=O.Pp,dP=P-Pp;
+ if(Math.abs(dP)>B.v0*dt*1.2+0.5){O.R=0;O.Pp=P;return P}
+ if(dP>1e-6)O.R+=dP;else O.R=0;
+ const sp=dt>0?dP/dt:0,hi=B.ph===3?B.du-38:B.du,vmin=RDOB_FAST*hi/Math.max(0.1,B.a.time/SPD),run=rdObRunPx(hi),boxF=Math.max(B.fb,P+off);
+ O.list.forEach(o=>{
+  if(o.k==="wall"&&(o.st==="hid"||o.st==="up")){const fbMax=o.x-22;
+   if(o.st==="hid"&&boxF+17>=o.x-RDOB_SEE){o.st="up";o.t0=now;rdFlash("🧱 A wall popped up! Back up, speed up and ram it!")}
+   if(o.st==="up"){if(B.fb>fbMax)B.fb=fbMax;
+    const lock=!!(B.grip||B.hook)&&B.fb>=fbMax-0.5;
+    if(P+off>fbMax||lock){
+     if(dP>1e-6&&O.R>=run&&sp>=vmin){o.st="fall";o.t0=now;rdFlash("💥 Wall down!")}
+     else{P=lock?Math.min(P,Pp):Math.min(P,fbMax-off);
+      if(dP>1e-6&&(!O.hw||now-O.hw>2200)){O.hw=now;rdFlash(sp<vmin?"🧱 Too slow! You need more speed.":"🧱 Back up first, then ram it fast!")}}}}}
+  else if(o.k==="ceil"){
+   if(o.st==="hid"&&boxF+17>=o.x-RDOB_SEE){o.st="down";o.t0=now;o.C=rdObClear(B);rdFlash("⬇️ Low ceiling ahead! Lower your arm to pass.")}
+   if(o.st==="down"&&P>Pp+1e-6&&now-o.t0>150){let why=null;try{why=rdObCeil(B,o,P,Pp,off)}catch(e){}
+    if(why){P=Pp;if(!O.hc||now-O.hc>2200){O.hc=now;rdFlash(why==="box"?"⬇️ The box is too high! Lower it.":"⬇️ Too tall! Lower your arm.")}}}}
+  else if(o.k==="heavy"){
+   if(o.st==="hid"&&boxF+17>=o.x-RDOB_SEE){o.st="shown";rdFlash("🏋️ Heads up: the box gets heavier ahead!")}
+   if(o.st==="shown"){
+    if(!o.on&&B.fb>=o.x){o.on=true;B.a.mass=o.m2;rdObRecalc(B);rdFlash("🏋️ The box is now "+(+o.m2.toFixed(1))+" kg!")}
+    else if(o.on&&B.fb<o.x-30){o.on=false;B.a.mass=B.aBase.mass;rdObRecalc(B)}}}});
+ O.Pp=P;return P}
+function rdObDraw(){const B=bat;if(!B||!B.obs||!B.obs.list||!B.obs.list.length)return;const sv=el("sv");if(!sv)return;
+ const sg=B.sg,X=f=>B.start[0]+sg*f,gy=B.start[1]+17,now=performance.now();let h="";
+ B.obs.list.forEach(o=>{if(o.st==="hid"||o.st==="gone")return;
+  if(o.k==="wall"){const cx=X(o.x),t=now-o.t0;let hh=RDOB_WALL_H,tr="",op=1;
+   if(o.st==="up")hh=RDOB_WALL_H*Math.min(1,t/320);
+   else{if(t>=900){o.st="gone";return}tr=` transform="rotate(${(sg*90*Math.min(1,t/450)).toFixed(1)} ${(cx+sg*RDOB_WALL_W/2).toFixed(1)} ${gy})"`;op=t<450?1:Math.max(0,1-(t-450)/450)}
+   let br="";for(let y=10;y<hh;y+=10)br+=`<line x1="${cx-5}" y1="${gy-y}" x2="${cx+5}" y2="${gy-y}" stroke="#78350f" stroke-width="1"/>`;
+   h+=`<g opacity="${op.toFixed(2)}"${tr}><rect x="${cx-5}" y="${gy-hh}" width="${RDOB_WALL_W}" height="${hh}" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>${br}</g>`}
+  else if(o.k==="ceil"){const p=Math.min(1,(now-o.t0)/500),yb=gy-o.C-(1-p)*40,xa=Math.min(X(o.x),X(o.x+o.len)),w=o.len;let hc="";
+   for(let x=0;x+8<=w;x+=8)hc+=`<line x1="${xa+x}" y1="${yb}" x2="${xa+x+8}" y2="${yb-8}" stroke="#fde68a" stroke-width="2"/>`;
+   h+=`<g><line x1="${xa+3}" y1="${yb-8}" x2="${xa+3}" y2="${yb-60}" stroke="#94a3b8" stroke-width="2"/><line x1="${xa+w-3}" y1="${yb-8}" x2="${xa+w-3}" y2="${yb-60}" stroke="#94a3b8" stroke-width="2"/><rect x="${xa}" y="${yb-8}" width="${w}" height="8" rx="2" fill="#475569" stroke="#0f172a"/>${hc}<text class="keep" x="${xa+w/2}" y="${yb-12}" font-size="9" text-anchor="middle" fill="#fde68a">LOW ROOF</text></g>`}
+  else if(o.k==="heavy"){const cx=X(o.x);
+   h+=`<g><rect x="${cx-22}" y="${gy-4}" width="44" height="4" rx="1" fill="${o.on?"#dc2626":"#f59e0b"}" stroke="#0f172a" stroke-width=".8"/><text class="keep" x="${cx}" y="${gy-8}" font-size="10" font-weight="700" text-anchor="middle" fill="${o.on?"#fecaca":"#fde68a"}">🏋️ ${+o.m2.toFixed(1)} kg</text></g>`}});
+ if(h)sv.insertAdjacentHTML("beforeend",h)}
+rdDraw=function(){_rdDraw38();try{rdObDraw()}catch(e){}};
+fight=function(ai,pk){_fight38(ai,pk);const B=bat;if(!B||!B.road||B.done)return;
+ B.aBase=B.a;B.a=Object.assign({},B.aBase);B.obs={ph:0,list:[],R:0,Pp:0};
+ if(rdObOn(B,"ceil")&&B.vb0){B.vb0[1]-=34;B.vb0[3]+=34}};
+
 (function(){const s=document.createElement("div");s.id="sside";s.innerHTML="<i></i>";document.body.appendChild(s);const t=s.firstChild,de=()=>document.scrollingElement||document.documentElement;
 const room=()=>s.clientHeight-t.offsetHeight,max=()=>Math.max(1,de().scrollHeight-innerHeight);
 function place(){t.style.top=Math.max(0,Math.min(room(),de().scrollTop/max()*room()))+"px"}
@@ -953,7 +1021,7 @@ const up=()=>{s._d=0;s.classList.remove("on")};s.addEventListener("pointerup",up
 addEventListener("scroll",place,{passive:true});
 setInterval(()=>{const on=!!document.getElementById("sv");s.style.display=on?"block":"none";if(on)place();const sv0=document.getElementById("sv");if(sv0)sv0.classList.toggle("mechsv",typeof sim==="object"&&!!sim&&!!sim.p&&sim.p.type==="m")},400)})();
 
-const CDT=0.05,RQAPPV="37H";
+const CDT=0.05,RQAPPV="38H";
 function motorStrip(mo){const run=mo&&Math.abs(mo.v)>=0.5&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
