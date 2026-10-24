@@ -233,7 +233,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v78";
+const RQCACHE="roboquest-v79";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -841,6 +841,11 @@ function clipStrip(pts,x0,x1){let p=clipHalf(pts,"x",x0,true);if(p.length)p=clip
 function rdCap(B,id,cx){const P=sim.p.parts;let o=P.find(q=>q.id===id);if(o&&o.t==="brick"){const h=brickHost(o,P);if(h)o=h}
  const servoBased=o&&(o.t==="arm"||o.t==="pincher"||o.t==="servo"||o.t==="brick");
  if(servoBased){const sv=P.filter(q=>q.t==="servo");if(!sv.length)return{kg:99,how:"servo"};const car=el("car"),m=/translate\(\s*(-?[\d.]+)/.exec(car.getAttribute("transform")||""),tx=m?+m[1]:0;let best=0;sv.forEach(q=>{const t=SVT[q.sz||"M"]||4,reach=Math.max(2,Math.abs(cx-(q.i*LP+tx))*CMU);best=Math.max(best,t/reach)});return{kg:best,how:"servo"}}
+ if(B.mm&&o){let best=null;Object.keys(B.mm).forEach(m=>{const S=B.mm[m];let F=null;
+  if(o.t==="drum"&&S.drums&&S.drums[o.id])F=S.drums[o.id].F;
+  else if(o.t==="rack"&&S.racks&&S.racks[o.id]){const kr=S.racks[o.id],rows=S.rows||[],mr=rows.find(r=>r.g.t==="motor"&&r.driven&&r.w),gr=rows.find(r=>r.g.id===kr.g);if(mr&&gr&&gr.w){const ratio=Math.abs(mr.w)/Math.abs(gr.w),eff=Math.pow(EFF,Math.max(1,gr.depth)),Tm=Math.max(0,TSTALL*(1-Math.abs(mRpm(mr.g))/MAXRPM));F=Tm*ratio*eff/(rr(gr.g)*CMU)}}
+  if(F!==null&&F!==undefined&&(best===null||F>best))best=F});
+  if(best!==null)return{kg:best/9.8,how:"motor"}}
  const c=B.r&&B.r.cm,F=c&&c.F!==undefined?c.F:0;return{kg:F/9.8,how:"motor"}}
 function rdBoxStep(B,dt){if(B.ph===2||B.noTip===undefined)return;const sg=B.sg,gy=B.start[1]+17,bx=B.start[0]+sg*B.fb,pal=gy-PAL,bot0=pal-(B.bh||0);
  const polys=rdPolys();B.weak=false;
@@ -850,22 +855,29 @@ function rdBoxStep(B,dt){if(B.ph===2||B.noTip===undefined)return;const sg=B.sg,g
  hk.forEach(h=>{if(B.hook)return;const i=hinfo(h);if(B.hookLock===h.id){if(i.y<bt0-16||Math.abs(i.x-bx)>30)B.hookLock=null;return}if(Math.abs(i.x-bx)<=15&&i.y>=bt0-4&&i.y<=bt0+12){const cp=rdCap(B,h.id,i.x);if(cp.kg>=B.a.mass)B.hook={id:h.id,x:i.x,y:i.y};else B.weak=cp}});
  if(B.hook){B.sup=null;B.grip=null;return}
  let GL=null,GR=null,GU=null,GD=null;
- polys.forEach(p=>{const c=clipHalf(clipHalf(p.pts,"y",bt0+2,true),"y",bot0-2,false);if(c.length<3)return;let mn=1e9,mx=-1e9,sx=0,sy=0;c.forEach(q=>{mn=Math.min(mn,q.x);mx=Math.max(mx,q.x);sx+=q.x;sy+=q.y});sx/=c.length;sy/=c.length;
-  if(mx>=xL-5&&sx<bx+8&&mn<xL-4&&(!GL||mx>GL.mx))GL={id:p.id,k:p.k===undefined?p.id:p.k,mx,sx,sy};if(mn<=xR+5&&sx>bx-8&&mx>xR+4&&(!GR||mn<GR.mn))GR={id:p.id,k:p.k===undefined?p.id:p.k,mn,sx,sy}});
- polys.forEach(p=>{const c2=clipStrip(p.pts,bx-15,bx+15);if(c2.length>=3){let y0=1e9,y1=-1e9,qx=0,qy=0;c2.forEach(q=>{y0=Math.min(y0,q.y);y1=Math.max(y1,q.y);qx+=q.x;qy+=q.y});qx/=c2.length;qy/=c2.length;if(y1>=bt0-6&&y1<=bt0+10&&y0<bt0-3&&(!GU||y1>GU.y1))GU={id:p.id,k:p.k===undefined?p.id:p.k,y1,sx:qx,sy:qy};if(y0>=bot0-10&&y0<=bot0+6&&y1>bot0+3&&(!GD||y0<GD.y0))GD={id:p.id,k:p.k===undefined?p.id:p.k,y0,sx:qx,sy:qy}}});
- if(!(GL&&GR&&GL.k!==GR.k)&&GU&&GD&&GU.k!==GD.k){GL=GU;GR=GD}
+ {const zx0=xL-12,zx1=xR+12,zy0=bt0-12,zy1=bot0+12,my0=(bt0+bot0)/2,JT={pincher:1,arm:1,brick:1,rack:1},cands=[];
+  polys.forEach(p=>{if(p.cls==="rh")return;const part=sim.p.parts.find(q=>q.id===p.id);if(part&&!JT[part.t])return;let c=clipStrip(p.pts,zx0,zx1);if(c.length)c=clipHalf(c,"y",zy0,true);if(c.length)c=clipHalf(c,"y",zy1,false);if(c.length<3)return;let ar=0,sx=0,sy=0,mn=1e9,mx=-1e9,y0=1e9,y1=-1e9;for(let a=0;a<c.length;a++){const q=c[a],r=c[(a+1)%c.length];ar+=q.x*r.y-r.x*q.y;sx+=q.x;sy+=q.y;mn=Math.min(mn,q.x);mx=Math.max(mx,q.x);y0=Math.min(y0,q.y);y1=Math.max(y1,q.y)}ar=Math.abs(ar)/2;if(ar<4)return;cands.push({id:p.id,k:p.k===undefined?p.id:p.k,sx:sx/c.length,sy:sy/c.length,ar,mn,mx,y0,y1})});
+  const pick=(A,Bq)=>{let best=null;A.forEach(a=>Bq.forEach(b=>{if(a.k===b.k)return;const sc=Math.min(a.ar,b.ar)+(a.id===b.id?1e6:0);if(!best||sc>best.sc)best={a,b,sc}}));return best};
+  const Ls=cands.filter(c=>c.sx<bx-6),Rs=cands.filter(c=>c.sx>bx+6),Us=cands.filter(c=>c.sy<my0-6),Ds=cands.filter(c=>c.sy>my0+6);
+  let pr=pick(Ls,Rs);if(pr){GL=pr.a;GR=pr.b;GL.touch=GL.mx>=xL-1;GR.touch=GR.mn<=xR+1;GL.near=GL.mx>=xL-6;GR.near=GR.mn<=xR+6}
+  else{pr=pick(Us,Ds);if(pr){GL=pr.a;GR=pr.b;GL.touch=GL.y1>=bt0-1;GR.touch=GR.y0<=bot0+1;GL.near=GL.y1>=bt0-6;GR.near=GR.y0<=bot0+6}}}
+ {const angOf=pid=>{const pc=sim.p.parts.find(q=>q.id===pid&&q.t==="pincher"),sv=pc&&sim.p.parts.find(q=>q.t==="servo"&&q.i===pc.i&&q.j===pc.j);return sv?sv.ang:null},pn=GL&&GR&&GL.id===GR.id?GL.id:null;
+ if(B.gripLock){const lk=B.gripLock,a=angOf(lk.pid);if(a===null||a<lk.ang-8||pn!==lk.pid)B.gripLock=null}
+ if(B.gripLock&&pn===B.gripLock.pid){GL=GR=null}
+ if(GL&&GR&&!(B.grip&&B.grip.l===GL.k&&B.grip.r===GR.k)&&(!(GL.near&&GR.near)||(GL.id===GR.id&&(angOf(GL.id)||0)>=84))){GL=GR=null}
+ if(B.grip&&B.grip.pid&&B.grip.a0!==undefined){const a=angOf(B.grip.pid);if(a!==null&&a>B.grip.a0+14){B.gripLock={pid:B.grip.pid,ang:a};B.dropPid=B.grip.pid;B.grip=null;GL=GR=null}}}
  if(GL&&GR&&GL.k!==GR.k){const cp=rdCap(B,GL.id,bx),cq=rdCap(B,GR.id,bx),kg=Math.min(cp.kg,cq.kg);
-  if(kg>=B.a.mass){const g=B.grip,mx=(GL.sx+GR.sx)/2,my=(GL.sy+GR.sy)/2;if(g&&g.l===GL.k&&g.r===GR.k){const dx=mx-g.mx,dy=my-g.my;if(Math.abs(dx)<40&&Math.abs(dy)<40){B.fb+=sg*dx;B.bh=Math.max(0,(B.bh||0)-dy)}}{const same=g&&g.l===GL.k&&g.r===GR.k,pid=GL.id===GR.id?GL.id:null;let a0=same?g.a0:undefined;if(!same&&pid){const pc=sim.p.parts.find(q=>q.id===pid&&q.t==="pincher"),sv=pc&&sim.p.parts.find(q=>q.t==="servo"&&q.i===pc.i&&q.j===pc.j);if(sv)a0=sv.ang}B.grip={l:GL.k,r:GR.k,mx,my,pid,a0}};B.sup=null;B.weak=false;return}
+  if(kg>=B.a.mass){const g=B.grip,mx=(GL.sx+GR.sx)/2,my=(GL.sy+GR.sy)/2;if(g&&g.l===GL.k&&g.r===GR.k){const dx=mx-g.mx,dy=my-g.my;if(Math.abs(dx)<160&&Math.abs(dy)<160){B.fb+=sg*dx;B.bh=Math.max(0,(B.bh||0)-dy)}}{const same=g&&g.l===GL.k&&g.r===GR.k,pid=GL.id===GR.id?GL.id:null;let a0=same?g.a0:undefined;if(!same&&pid){const pc=sim.p.parts.find(q=>q.id===pid&&q.t==="pincher"),sv=pc&&sim.p.parts.find(q=>q.t==="servo"&&q.i===pc.i&&q.j===pc.j);if(sv)a0=sv.ang}if(same&&pid&&!(GL.touch&&GR.touch)){const pc=sim.p.parts.find(q=>q.id===pid&&q.t==="pincher"),sv=pc&&sim.p.parts.find(q=>q.t==="servo"&&q.i===pc.i&&q.j===pc.j);if(sv&&a0!==undefined)a0=Math.min(a0,sv.ang)}B.grip={l:GL.k,r:GR.k,mx,my,pid,a0}};B.sup=null;B.weak=false;B.dropPid=null;return}
   else{B.weak=kg===cp.kg?cp:cq}}
  B.grip=null;
 let best=pal,sup=null,supx=0;
- const consider=(p,x0,x1,off)=>{const c=clipStrip(p.pts,x0,x1);if(c.length<3)return;let top=1e9,sx=0;c.forEach(q=>{if(q.y<top)top=q.y});c.forEach(q=>sx+=q.x);sx/=c.length;const cand=top-off,win=(B.sup&&B.sup.id===p.id)?40:RISE;if(cand>=bot0-win&&cand<=best&&(cand<best||!sup)){best=cand;sup=p.id;supx=sx}};
+ const consider=(p,x0,x1,off)=>{if(B.dropPid){if(p.id===B.dropPid)return;const pt=sim.p.parts.find(q=>q.id===p.id);if(pt&&(pt.t==="arm"||pt.t==="servo"||pt.t==="pincher"))return}const c=clipStrip(p.pts,x0,x1);if(c.length<3)return;let top=1e9,sx=0;c.forEach(q=>{if(q.y<top)top=q.y});c.forEach(q=>sx+=q.x);sx/=c.length;const cand=top-off,win=(B.sup&&B.sup.id===p.id)?40:RISE;if(cand>=bot0-win&&cand<=best&&(cand<best||!sup)){best=cand;sup=p.id;supx=sx}};
  polys.forEach(p=>{consider(p,bx-15,bx+15,0)});
  if(sup&&best<bot0-0.5){const cp=rdCap(B,sup,supx);if(cp.kg<B.a.mass){B.weak=cp;best=bot0;sup=null}}
  let bot=best;if(bot>bot0)bot=Math.min(bot,bot0+520*dt);
  const resting=Math.abs(bot-best)<1.5&&sup;
  if(resting&&B.sup&&B.sup.id===sup){const dx=supx-B.sup.x;if(Math.abs(dx)<40)B.fb+=sg*dx}
- B.sup=resting?{id:sup,x:supx}:null;B.bh=Math.max(0,pal-bot);if(B.weak&&(!B.wn||performance.now()-B.wn>2500)){B.wn=performance.now();rdFlash("💪 Too heavy! The "+(B.weak.how==="servo"?"servo":"motor")+" can lift only "+(+B.weak.kg.toFixed(2))+" kg")}}
+ B.sup=resting?{id:sup,x:supx}:null;B.bh=Math.max(0,pal-bot);if(B.dropPid&&B.bh<1)B.dropPid=null;if(B.weak&&(!B.wn||performance.now()-B.wn>2500)){B.wn=performance.now();rdFlash("💪 Too heavy! The "+(B.weak.how==="servo"?"servo":"motor")+" can lift only "+(+B.weak.kg.toFixed(2))+" kg")}}
 function rdSolveSub(B,mid){const keep=sim,fp=FULLPWR;let res=null;const p=JSON.parse(JSON.stringify(B.r.simp));p.parts=p.parts.filter(o=>o.t!=="motor"||o.id===mid);sim={p,hist:[],run:true};FULLPWR=true;try{solveMech();res=sim.mres}catch(x){res=null}finally{sim=keep;FULLPWR=fp}return res}
 function rdInitMotors(B){const ids=B.r.simp.parts.filter(o=>o.t==="motor").map(o=>o.id);B.mm={};let best=null;ids.forEach(id=>{const r=rdSolveSub(B,id);if(!r)return;B.mm[id]=r;const cv=r.car&&r.car.v?Math.abs(r.car.v):0;if(cv>0&&(!best||cv>best.cv))best={id,cv}});B.prim=best?best.id:(ids[0]||null);B.Tk={};B.Tkp={};ids.forEach(id=>{B.Tk[id]=0;B.Tkp[id]=0});B.ASrk={};B.ASrp={}}
 function rdMotion(B,dt){if(!B.mm)rdInitMotors(B);const base=sim.mres;if(!base)return;const ids=Object.keys(B.mm),sel=B.ch[B.ci];
@@ -923,7 +935,7 @@ const up=()=>{s._d=0;s.classList.remove("on")};s.addEventListener("pointerup",up
 addEventListener("scroll",place,{passive:true});
 setInterval(()=>{const on=!!document.getElementById("sv");s.style.display=on?"block":"none";if(on)place();const sv0=document.getElementById("sv");if(sv0)sv0.classList.toggle("mechsv",typeof sim==="object"&&!!sim&&!!sim.p&&sim.p.type==="m")},400)})();
 
-const CDT=0.05,RQAPPV="34H";
+const CDT=0.05,RQAPPV="35H";
 function motorStrip(mo){const run=mo&&Math.abs(mo.v)>=0.5&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
