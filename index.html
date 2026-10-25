@@ -233,7 +233,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v89";
+const RQCACHE="roboquest-v90";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -943,6 +943,8 @@ bLoop=function(){const B=bat;if(!B||!B.road){const q=_bLoop1();if(B&&B.mshake&&!
   const rc=document.querySelector("#bres .rescard p");if(rc)rc.textContent=r.win?`Your machine pushed the box to B, drove back, and delivered a second box. ${B.pts} ⭐ points!`:`${r.msg} You scored ${B.pts} ⭐ so far.`;return}
  requestAnimationFrame(bLoop)};
 
+/* the battle variable `bat` does not exist until the first fight, so always read it through this */
+function rdBat(){return typeof bat!=="undefined"?bat:null}
 /* ===== 45H: DARKNESS + LIGHT SENSOR FEED, at least 4 obstacle types per round, tags button above the machines, on top of 44H: TAGS + ACHIEVEMENTS (tap a tag to open, tap elsewhere to close; side panel before the arena; saved counters) on top of 43H: RANDOM EVENTS + CEILING HEIGHTS + OPENING FLOOR (on top of the 41H wall / ceiling / weight / tags). Original header: STAGE 2 + STAGE 7 - OBSTACLES (hard 2-hit wall, wide falling ceiling that hurts if it lands on you, +0.5 kg at every checkpoint) and the TAG PANEL. Only runs in the Mechatronics road battle, and only for obstacles the teacher switched on. ===== */
 const RDOB_LIFT=["arm","pincher","rack","brick"];
 const RDOB_WALL_W=10,RDOB_WALL_H=300,RDOB_CEIL_LEN=10/CMU,RDOB_RUN_CM=3,RDOB_FAST=2,RDOB_SEE=150,RDOB_CSEE=0,RDOB_EVERY_CM=100,RDOB_KG=0.5,RDOB_WARN=0.6,RDOB_LIGHT_R=130,RDOB_DAY=80,RDOB_NIGHT=5;
@@ -972,7 +974,7 @@ function rdObLight(B){let a=0;const O=B&&B.obs,now=performance.now();if(O&&O.lis
 function rdObRelight(B){try{bRecalc();battleDraw()}catch(e){}}
 /* the arena tells every light sensor in your circuit how bright it is (the saved project is never changed) */
 const _circuitRes45=circuitRes,_circuitMotor45=circuitMotor;
-function rdLdrFeed(E,f){const B=bat;if(!(B&&B.road&&B.obs&&B.live&&!B.done&&B.proj&&B.proj.e===E))return f();const ld=E.parts.filter(o=>o.t==="ldr");if(!ld.length)return f();
+function rdLdrFeed(E,f){const B=rdBat();if(!(B&&B.road&&B.obs&&B.live&&!B.done&&B.proj&&B.proj.e===E))return f();const ld=E.parts.filter(o=>o.t==="ldr");if(!ld.length)return f();
  const L=rdObLight(B),old=ld.map(o=>o.light);ld.forEach(o=>{o.light=L});try{return f()}finally{ld.forEach((o,k)=>{o.light=old[k]})}}
 circuitRes=function(E){return rdLdrFeed(E,()=>_circuitRes45(E))};
 circuitMotor=function(E){return rdLdrFeed(E,()=>_circuitMotor45(E))};
@@ -1050,7 +1052,7 @@ function rdObStep(B,P,dt){const Pin=P,O=B.obs;if(!O||B.done)return P;
   tg.t=now}
  O.R=(!rz&&P-Pp>1e-6)?R0+(P-Pp):0;O.Pp=P;return P}
 function rdObTg(B,k){if(B.tg&&!B.tg[k]){B.tg[k]=true;try{rdTagsRefresh()}catch(e){}}}
-function rdObDraw(){const B=bat;if(!B||!B.obs||!B.obs.list||!B.obs.list.length)return;const sv=el("sv");if(!sv)return;
+function rdObDraw(){const B=rdBat();if(!B||!B.obs||!B.obs.list||!B.obs.list.length)return;const sv=el("sv");if(!sv)return;
  const sg=B.sg,X=f=>B.start[0]+sg*f,gy=B.start[1]+17,now=performance.now();let h="";
  B.obs.list.forEach(o=>{if(o.st==="hid"||o.st==="gone")return;
   if(o.k==="wall"){const cx=X(o.x),t=now-o.t0,W=RDOB_WALL_W,hf=W/2;let hh=RDOB_WALL_H,tr="",op=1;
@@ -1111,7 +1113,7 @@ function rdTagInfoEntry(a,id){const t=RDTAGS.find(q=>q.id===id),got=((state.tags
  else if(t.k==="r")st+=(st?"<br>":"")+"You earn this one during a run, when you win.";
  return `<b>${t.ic} ${t.n}</b><br>${t.d}<br><span style="opacity:.9">${st}</span>`}
 /* in the arena: a small Tags button that opens a panel */
-function rdTagsRefresh(){const B=bat;if(B&&B.road&&el("rdtp")){const{h,n}=rdTagChips(rdTagGot(B),RDTG_SEL,t=>t.k==="r"&&B.tg&&!rdTagOK(B,t.id));el("rdtg").innerHTML=h;el("rdtn").textContent=n+"/"+RDTAGS.filter(t=>t.k!=="s").length;
+function rdTagsRefresh(){const B=rdBat();if(B&&B.road&&el("rdtp")){const{h,n}=rdTagChips(rdTagGot(B),RDTG_SEL,t=>t.k==="r"&&B.tg&&!rdTagOK(B,t.id));el("rdtg").innerHTML=h;el("rdtn").textContent=n+"/"+RDTAGS.filter(t=>t.k!=="s").length;
   const d=el("rdtd");if(RDTG_SEL){d.style.display="block";d.innerHTML=rdTagInfoBattle(B,RDTG_SEL)}else d.style.display="none"}
  rdTagsEntryRender()}
 function rdTagsTap(id){RDTG_SEL=RDTG_SEL===id?null:id;rdTagsRefresh()}
@@ -1143,9 +1145,9 @@ function rdTagsFinish(B){if(!B||!B.road||!B.r||!B.r.win||!B.rdwin||B.tagsDone)re
  const res=el("bres");if(res)res.insertAdjacentHTML("beforeend",`<div class="smsg good">🏷️ Task completed: ${ok.map(t=>t.ic+" "+t.n+(fresh.includes(t)?" (new!)":"")).join(" · ")}</div>`);
  try{rdTagsRefresh()}catch(e){}}
 const _bRes45=bResult;
-bResult=function(){_bRes45();try{rdTagsFinish(bat)}catch(e){}};
+bResult=function(){_bRes45();try{rdTagsFinish(rdBat())}catch(e){}};
 rdDraw=function(){_rdDraw45();try{rdObDraw()}catch(e){}};
-fight=function(ai,pk){_fight45(ai,pk);const B=bat;if(!B||!B.road||B.done)return;
+fight=function(ai,pk){_fight45(ai,pk);const B=rdBat();if(!B||!B.road||B.done)return;
  B.aBase=B.a;B.a=Object.assign({},B.aBase);{const pool=["wall","ceil","fakefl","dark","heavy"].filter(k=>rdObsOn(B.aBase,k)).sort(()=>Math.random()-.5),lo=Math.min(4,pool.length);B.ev=pool.slice(0,pool.length?lo+Math.floor(Math.random()*(pool.length-lo+1)):0)}
  B.obs={ph:0,list:[],R:0,Pp:0};B.tg={};RDTG_SEL=null;try{rdTagsInit(B)}catch(e){}
  if(rdObOn(B,"ceil")&&B.vb0){const mg=Math.max(...rdObGaps(B.aBase)),ext=Math.min(110,Math.max(40,Math.round(PAL+BXH+mg/CMU-47)));B.vb0[1]-=ext;B.vb0[3]+=ext}};
@@ -1175,7 +1177,7 @@ function rdBuildCtl(B){const p=B.proj,E=p.e,mp=id=>p.map.some(m=>m.id===id);
  const lab=c=>c.fb?"Motor 1":c.motors.map(id=>mn[id]).concat(c.leds.map(id=>ln[id])).join(" / ");
  const cnt={};ctl.forEach(c=>{c.n=lab(c);cnt[c.n]=(cnt[c.n]||0)+1});
  ctl.forEach(c=>{if(cnt[c.n]>1&&c.bi!==undefined)c.n+=" (Button "+(c.bi+1)+")";c.t=c.motors.length?"motor":"led";
-  Object.defineProperty(c,"id",{enumerable:true,get(){const B=bat,pr=B&&B.prim;return this.motors.find(i=>"mt"+i===pr)||this.motors[0]||this.leds[0]||null}})});
+  Object.defineProperty(c,"id",{enumerable:true,get(){const B=rdBat(),pr=B&&B.prim;return this.motors.find(i=>"mt"+i===pr)||this.motors[0]||this.leds[0]||null}})});
  return ctl}
 /* which buttons the pad presses: only the selected control's button (never every button) */
 function rdCtlPress(B,id){const c=B.ch&&B.ch[B.ci];if(!c||c.fb||c.all)return true;return c.btn===id}
@@ -1192,7 +1194,7 @@ const up=()=>{s._d=0;s.classList.remove("on")};s.addEventListener("pointerup",up
 addEventListener("scroll",place,{passive:true});
 setInterval(()=>{const on=!!document.getElementById("sv");s.style.display=on?"block":"none";if(on)place();const sv0=document.getElementById("sv");if(sv0)sv0.classList.toggle("mechsv",typeof sim==="object"&&!!sim&&!!sim.p&&sim.p.type==="m")},400)})();
 
-const CDT=0.05,RQAPPV="45H";
+const CDT=0.05,RQAPPV="46H";
 function motorStrip(mo){const run=mo&&Math.abs(mo.v)>=0.5&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
