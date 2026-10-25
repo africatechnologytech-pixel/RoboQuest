@@ -233,7 +233,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v86";
+const RQCACHE="roboquest-v87";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -623,8 +623,8 @@ function bOverlay(tm){const B=bat,a=B.a,c=B.r.cm;if(!B.start)return;const sv=el(
 function bLoop(){if(!bat||bat.done||!el("btimer"))return;const B=bat,a=B.a,r=B.r,c=r.cm;let tm=(performance.now()-B.wall)/1000*B.ts;const end=tm>=B.tend;if(end)tm=B.tend;sim.t0=performance.now()-tm*1000;if(sim.mres&&c&&!c.fOK)tm=tm;drawM(true);bOverlay(tm);el("btimer").textContent=(c||B.kind==="idle")?`${B.stuck?"😓 Struggling… ":""}⏱️ ${Math.min(tm*SPD,a.time).toFixed(1)} s of ${a.time} s`:"";if(el("mtim"))el("mtim").style.width=Math.min(100,tm*SPD/a.time*100)+"%";if(end){B.done=true;bResult();return}requestAnimationFrame(bLoop)}
 function bResult(){const a=bat.a,r=bat.r,c=r.cm,ok=r.win,F=n=>(+n.toFixed(1)).toString(),tick=b=>b?"✅":"❌";let lines="",hint="";if(!c){hint=r.why||r.msg}else if(c.kind==="car"){lines=`<div class="smsg info">🔧 Motor: ${c.rpmM} RPM → torque ${F(c.Tm)} N·cm</div><div class="smsg info">🛞 Driving wheel turns at ${F(c.rpmP)} RPM (gears change the speed by ×${F(1/c.ratio)} and the strength by ×${F(c.ratio)})</div><div class="smsg ${c.fOK?"good":"bad"}">${tick(c.fOK)} Push force: ${F(c.F)} N (needs ${F(c.need)} N)</div><div class="smsg info">🚗 Car weight ${F(c.mass)} kg → the tyres grip up to ${F(c.grip)} N${c.slip?` (the motor wants ${F(c.Fd)} N, so the wheels slip)`:""}</div><div class="smsg ${c.tOK?"good":"bad"}">${tick(c.tOK)} Speed: ${F(c.v)} cm/s → ${c.tN<1e8?F(c.tN)+" s":"too slow"} for ${a.dist} cm (limit ${a.time} s)</div>`;if(!c.fOK&&c.slip)hint="The wheels slip! The car is too light to grip. Make it heavier by adding frame pieces, or use gears so the motor pushes with less force.";else if(!c.fOK)hint="Not enough force. Use a small gear driving a big gear to gain strength, use smaller wheels, or lower the motor speed (a slower motor is stronger).";else if(!c.tOK)hint="Too slow. Use bigger wheels or less gear reduction."}else{lines=`<div class="smsg info">🔧 Motor: ${c.rpmM} RPM → torque ${F(c.Tm)} N·cm</div><div class="smsg info">⚙️ Pinion turns at ${F(c.rpmP)} RPM (gears change the speed by ×${F(1/c.ratio)} and the strength by ×${F(c.ratio)})</div><div class="smsg ${c.fOK?"good":"bad"}">${tick(c.fOK)} Force on the box: ${F(c.F)} N (needs ${F(r.Freq)} N)</div><div class="smsg ${c.tOK?"good":"bad"}">${tick(c.tOK)} Speed: ${F(c.v)} cm/s → ${c.tN<1e8?F(c.tN)+" s":"too slow"} for ${a.dist} cm (limit ${a.time} s)</div><div class="smsg ${c.dOK?"good":"bad"}">${tick(c.dOK)} The rack can push ${F(c.travel)} cm (needs ${a.dist} cm)</div>`;if(!c.fOK)hint="Not enough force. Use a small gear driving a big gear to get more strength, use a smaller pinion gear, or lower the motor speed (a slower motor is stronger).";else if(!c.tOK)hint="Too slow. Use less gear reduction, a bigger pinion gear, or a faster motor.";else if(!c.dOK)hint="The rack is too short. Use a longer rack and start with the gear at its far end."}
 if(ok){state.stats.wins=(state.stats.wins||0)+1;save()}el("bres").innerHTML=`<div class="rescard ${ok?"win":"lose"}"><img src="${ok?BT.win:BT.lose}" alt=""><div><h2>${ok?"🏆 VICTORY!":"💥 DEFEATED"}</h2><p>${ok?`Your machine moved the ${a.mass} kg box to B!`:esc(r.msg||(bat.stuck?"⏱️ Time ran out. The box did not reach B.":"The box did not reach B."))}</p></div></div>${lines}${ok?"":`<div class="smsg warn">💡 ${hint}</div>`}<p style="text-align:center">⚔️ Battles won: <b>${state.stats.wins||0}</b></p><div class="two"><button class="primary" onclick="fight(${bat.ai},${bat.pk})">⚔️ Fight again</button><button onclick="arenaScreen(${bat.ai})">Choose another machine</button></div>`}
-function arenaCard(){const a=state.arenas[0];return `<div class="card"><h3>⚔️ Mechanical battle arena</h3><label>Arena name<input type="text" value="${esc(a.name)}" oninput="state.arenas[0].name=this.value"></label><label>Story<textarea oninput="state.arenas[0].story=this.value">${esc(a.story)}</textarea></label><label>Box weight (kg)<input type="number" step="0.5" min="0.5" value="${a.mass}" oninput="state.arenas[0].mass=Math.max(0.1,+this.value||0.1)"></label><label>Distance from A to B (cm)<input type="number" step="0.5" min="1" value="${a.dist}" oninput="state.arenas[0].dist=Math.max(0.5,+this.value||0.5)"></label><label>Time limit (seconds)<input type="number" step="1" min="1" value="${a.time}" oninput="state.arenas[0].time=Math.max(1,+this.value||1)"></label><label>Floor roughness (0.1 smooth, 0.6 rough)<input type="number" step="0.05" min="0.05" max="1" value="${a.fric}" oninput="state.arenas[0].fric=Math.max(0.05,+this.value||0.05)"></label><label>Falling ceiling gap above the box (cm). Smaller is harder<input type="number" step="0.5" min="2" max="10" value="${a.cgap===undefined?3:a.cgap}" oninput="state.arenas[0].cgap=Math.min(10,Math.max(2,+this.value||2))"></label><label>Lightest machine tag: most parts allowed<input type="number" step="1" min="3" max="60" value="${a.tagParts===undefined?15:a.tagParts}" oninput="state.arenas[0].tagParts=Math.min(60,Math.max(3,Math.round(+this.value||15)))"></label><h4 style="margin:12px 0 4px">🚧 Obstacles (tick the ones that may appear)</h4>${OBS.map(([k,n])=>`<label class="chk" style="display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" ${rdObsOn(a,k)?"checked":""} onchange="rdObsSet('${k}',this.checked)" style="width:auto"> ${n}</label>`).join("")}<button class="primary" onclick="save();alert('Arena saved!')">Save arena</button></div>`}
-const OBS=[["wall","🧱 Popping wall"],["ceil","⬇️ Lowering ceiling"],["heavy","🏋️ Heavier box"],["fakecp","🚩 Fake checkpoint"],["fakefl","🕳️ Fake floor"],["rocks","🪨 Falling rocks"],["dark","🌑 Darkness"],["multi","📦 Several stacked boxes"]];
+function arenaCard(){const a=state.arenas[0];return `<div class="card"><h3>⚔️ Mechanical battle arena</h3><label>Arena name<input type="text" value="${esc(a.name)}" oninput="state.arenas[0].name=this.value"></label><label>Story<textarea oninput="state.arenas[0].story=this.value">${esc(a.story)}</textarea></label><label>Box weight (kg)<input type="number" step="0.5" min="0.5" value="${a.mass}" oninput="state.arenas[0].mass=Math.max(0.1,+this.value||0.1)"></label><label>Distance from A to B (cm)<input type="number" step="0.5" min="1" value="${a.dist}" oninput="state.arenas[0].dist=Math.max(0.5,+this.value||0.5)"></label><label>Time limit (seconds)<input type="number" step="1" min="1" value="${a.time}" oninput="state.arenas[0].time=Math.max(1,+this.value||1)"></label><label>Floor roughness (0.1 smooth, 0.6 rough)<input type="number" step="0.05" min="0.05" max="1" value="${a.fric}" oninput="state.arenas[0].fric=Math.max(0.05,+this.value||0.05)"></label><label>Falling ceiling heights above the box (cm). It picks one at random each time it falls. Smaller is harder<input type="number" step="0.5" min="2" max="10" placeholder="3" value="${a.cgap===undefined?"":a.cgap}" oninput="rqNum('cgap',this.value,2,10)"><input type="number" step="0.5" min="2" max="10" placeholder="optional" value="${a.cgap2===undefined?"":a.cgap2}" oninput="rqNum('cgap2',this.value,2,10)"><input type="number" step="0.5" min="2" max="10" placeholder="optional" value="${a.cgap3===undefined?"":a.cgap3}" oninput="rqNum('cgap3',this.value,2,10)"></label><label>Opening floor: gap width (cm)<input type="number" step="0.5" min="1" max="3" placeholder="2" value="${a.floorGap===undefined?2:a.floorGap}" oninput="rqNum('floorGap',this.value,1,3)"></label><label>Opening floor: seconds open<input type="number" step="0.5" min="1" max="6" placeholder="2" value="${a.floorOpen===undefined?2:a.floorOpen}" oninput="rqNum('floorOpen',this.value,1,6)"></label><label>Opening floor: seconds closed<input type="number" step="0.5" min="1" max="8" placeholder="2" value="${a.floorClosed===undefined?2:a.floorClosed}" oninput="rqNum('floorClosed',this.value,1,8)"></label><label>Lightest machine tag: most parts allowed<input type="number" step="1" min="3" max="60" value="${a.tagParts===undefined?15:a.tagParts}" oninput="state.arenas[0].tagParts=Math.min(60,Math.max(3,Math.round(+this.value||15)))"></label><h4 style="margin:12px 0 4px">🚧 Obstacles (tick the ones that may appear)</h4>${OBS.map(([k,n])=>`<label class="chk" style="display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" ${rdObsOn(a,k)?"checked":""} onchange="rdObsSet('${k}',this.checked)" style="width:auto"> ${n}</label>`).join("")}<button class="primary" onclick="save();alert('Arena saved!')">Save arena</button></div>`}
+const OBS=[["wall","🧱 Popping wall"],["ceil","⬇️ Lowering ceiling"],["heavy","🏋️ Heavier box"],["fakefl","🕳️ Opening floor"],["rocks","🪨 Falling rocks"],["dark","🌑 Darkness"],["multi","📦 Several stacked boxes"]];
 function rdObsOn(a,k){return !a||!a.obs||a.obs[k]!==false}
 function rdObsSet(k,v){const a=state.arenas[0];a.obs=a.obs||{};a.obs[k]=!!v;save()}
 
@@ -943,10 +943,14 @@ bLoop=function(){const B=bat;if(!B||!B.road){const q=_bLoop1();if(B&&B.mshake&&!
   const rc=document.querySelector("#bres .rescard p");if(rc)rc.textContent=r.win?`Your machine pushed the box to B, drove back, and delivered a second box. ${B.pts} ⭐ points!`:`${r.msg} You scored ${B.pts} ⭐ so far.`;return}
  requestAnimationFrame(bLoop)};
 
-/* ===== 41H: STAGE 2 + STAGE 7 - OBSTACLES (hard 2-hit wall, wide falling ceiling that hurts if it lands on you, +0.5 kg at every checkpoint) and the TAG PANEL. Only runs in the Mechatronics road battle, and only for obstacles the teacher switched on. ===== */
-const RDOB_WALL_W=10,RDOB_WALL_H=300,RDOB_CEIL_LEN=10/CMU,RDOB_RUN_CM=3,RDOB_FAST=2,RDOB_SEE=150,RDOB_CSEE=0,RDOB_EVERY_CM=100,RDOB_KG=0.5;
-const _fight41=fight,_rdDraw41=rdDraw,_rdBoxStep41=rdBoxStep;
-function rdObOn(B,k){return rdObsOn(B.aBase||B.a,k)}
+/* ===== 43H: RANDOM EVENTS + CEILING HEIGHTS + OPENING FLOOR (on top of the 41H wall / ceiling / weight / tags). Original header: STAGE 2 + STAGE 7 - OBSTACLES (hard 2-hit wall, wide falling ceiling that hurts if it lands on you, +0.5 kg at every checkpoint) and the TAG PANEL. Only runs in the Mechatronics road battle, and only for obstacles the teacher switched on. ===== */
+const RDOB_LIFT=["arm","pincher","rack","brick"];
+const RDOB_WALL_W=10,RDOB_WALL_H=300,RDOB_CEIL_LEN=10/CMU,RDOB_RUN_CM=3,RDOB_FAST=2,RDOB_SEE=150,RDOB_CSEE=0,RDOB_EVERY_CM=100,RDOB_KG=0.5,RDOB_WARN=0.6;
+const _fight43=fight,_rdDraw43=rdDraw,_rdBoxStep43=rdBoxStep;
+function rdObOn(B,k){return rdObsOn(B.aBase||B.a,k)&&(!B.ev||B.ev.includes(k))}
+/* teacher fields: a blank box means "use the default" */
+function rqNum(k,v,mn,mx){const a=state.arenas[0];if(v===""||v===null||isNaN(+v)){delete a[k];return}a[k]=Math.min(mx,Math.max(mn,+v))}
+function rdObGaps(a){const g=[a&&a.cgap,a&&a.cgap2,a&&a.cgap3].filter(v=>v!==undefined&&v!==null&&v!=="").map(Number).filter(v=>v>=2&&v<=10);return g.length?g:[3]}
 function rdObRunPx(hi){return Math.min(RDOB_RUN_CM/CMU,hi*0.3)}
 function rdObShake(ms){const s=el("sv");if(!s||s.classList.contains("shake"))return;s.classList.add("shake");setTimeout(()=>{const q=el("sv");if(q)q.classList.remove("shake")},ms||420)}
 function rdObRecalc(B){const keep=sim;try{const r3=evalBattle(B.proj,B.a),c3=r3&&r3.cm,c=B.r&&B.r.cm;if(!c3||!c||c3.kind!=="car")return;c.fOK=c3.fOK;c.need=c3.need;if(!c3.fOK){const q=c3.F/Math.max(0.01,c3.need||r3.Freq);B.g=(q>=0.5&&!c3.slip)?0.35*(q-0.5)/0.5:0}}catch(e){}finally{sim=keep}}
@@ -961,18 +965,28 @@ function rdObDrop(B){if(B.ph===2||B.noTip===undefined)return;
  else if(B.grip&&B.grip.pid){const cp=rdCap(B,B.grip.pid,bx);if(weak(cp.kg)){const pc=sim.p.parts.find(q=>q.id===B.grip.pid&&q.t==="pincher"),sv=pc&&sim.p.parts.find(q=>q.t==="servo"&&q.i===pc.i&&q.j===pc.j);B.gripLock={pid:B.grip.pid,ang:sv?sv.ang:90};B.dropPid=B.grip.pid;B.grip=null;fell=true}}
  else if(B.sup&&(B.bh||0)>3){const cp=rdCap(B,B.sup.id,B.sup.x);if(weak(cp.kg)){B.dropPid=B.sup.id;B.sup=null;fell=true}}
  if(fell){const O=B.obs,t=performance.now();if(!O.hd||t-O.hd>2000){O.hd=t;rdFlash("💥 Too heavy! The box slipped and fell.")}}}
-rdBoxStep=function(B,dt){try{if(B&&B.obs&&B.aBase&&B.a.mass>B.aBase.mass)rdObDrop(B)}catch(e){}_rdBoxStep41(B,dt)};
+rdBoxStep=function(B,dt){try{if(B&&B.obs&&B.aBase&&B.a.mass>B.aBase.mass)rdObDrop(B)}catch(e){}_rdBoxStep43(B,dt)};
 function rdObGen(B,P){const O=B.obs,ph=B.ph;O.ph=ph;O.list=[];O.R=0;O.Pp=P;
  if(ph!==1&&ph!==3)return;
- const hi=ph===3?B.du-38:B.du,run=rdObRunPx(hi),fl=[.25,.5,.75].map(f=>hi*f),pl=[],n=Math.max(1,Math.round(hi*CMU/RDOB_EVERY_CM)),sep=Math.max(26,Math.min(300,hi*0.15)),kinds=[];
- ["wall","ceil"].filter(k=>rdObOn(B,k)).forEach(k=>{for(let i=0;i<n;i++)kinds.push(k)});
+ const hi=ph===3?B.du-38:B.du,run=rdObRunPx(hi),fl=[.25,.5,.75].map(f=>hi*f),pl=[],n=Math.max(1,Math.round(hi*CMU/RDOB_EVERY_CM)),sep=Math.max(26,Math.min(300,hi*0.15)),kinds=[],fgp=Math.max(1,Math.min(3,+B.aBase.floorGap||2))/CMU,fcl=Math.max(1,Math.min(8,+B.aBase.floorClosed||2)),fop=Math.max(1,Math.min(6,+B.aBase.floorOpen||2)),gaps=rdObGaps(B.aBase),nowT=performance.now();
+ ["wall","ceil","floor"].filter(k=>rdObOn(B,k==="floor"?"fakefl":k)).forEach(k=>{for(let i=0;i<n;i++)kinds.push(k)});
  kinds.sort(()=>Math.random()-.5).forEach(k=>{
-  const len=k==="ceil"?RDOB_CEIL_LEN:RDOB_WALL_W,mx=k==="ceil"?hi-RDOB_CEIL_LEN-20:hi-30,lo=k==="wall"?Math.max(60,hi*0.15,RDOB_WALL_W/2+17+run+10):Math.max(40,hi*0.1);
+  const len=k==="ceil"?RDOB_CEIL_LEN:k==="floor"?fgp:RDOB_WALL_W,mx=k==="ceil"?hi-RDOB_CEIL_LEN-20:k==="floor"?hi-60:hi-30,lo=k==="wall"?Math.max(60,hi*0.15,RDOB_WALL_W/2+17+run+10):k==="floor"?Math.max(60,hi*0.12):Math.max(40,hi*0.1);
   if(mx<lo)return;
   for(let t=0;t<80;t++){const x=lo+Math.random()*(mx-lo);if(pl.every(p=>x+len+sep<=p.x||p.x+p.len+sep<=x)&&(k==="ceil"||t>=40||fl.every(f=>Math.abs(f-(x+len/2))>=len/2+6))){pl.push({x,len,k});break}}});
  pl.sort((a,b)=>a.x-b.x).forEach(p=>{
   if(p.k==="wall")O.list.push({k:"wall",x:p.x,st:"hid",t0:0,hits:0});
-  else O.list.push({k:"ceil",x:p.x,len:p.len,st:"hid",t0:0,C:PAL+BXH+Math.max(2,+B.aBase.cgap||3)/CMU})})}
+  else if(p.k==="floor")O.list.push({k:"floor",x:p.x,len:p.len,st:"closed",cl:fcl,op:fop,t0:nowT-Math.random()*(fcl+RDOB_WARN+fop)*1000});
+  else O.list.push({k:"ceil",x:p.x,len:p.len,st:"hid",t0:0,gaps,C:PAL+BXH+gaps[0]/CMU})})}
+/* the floor drops away when the machine is not balanced over an open gap */
+function rdObFloorFall(B,o){const sg=B.sg,s0=B.start[0],PP=(sim&&sim.p&&sim.p.parts)||[],W={};let mn=1e9,mx=-1e9;
+ rdPolys().forEach(p=>{const pt=PP.find(q=>q.id===p.id);if(!pt)return;let a=1e9,b=-1e9;p.pts.forEach(q=>{const r=sg*(q.x-s0);if(r<a)a=r;if(r>b)b=r});
+  if(pt.t==="wheel"){const w=W[p.id]=W[p.id]||{a:1e9,b:-1e9};w.a=Math.min(w.a,a);w.b=Math.max(w.b,b)}
+  if(!RDOB_LIFT.includes(pt.t)){if(a<mn)mn=a;if(b>mx)mx=b}});
+ const ws=Object.values(W).map(w=>({cx:(w.a+w.b)/2,d:w.b-w.a}));if(!ws.length)return false;
+ const g0=o.x,g1=o.x+o.len,drop=w=>w.cx>g0&&w.cx<g1&&w.d<o.len*1.3,sup=ws.filter(w=>!drop(w));
+ if(sup.length===ws.length)return false;if(!sup.length)return true;
+ const c=(mn+mx)/2,a=Math.min(...sup.map(w=>w.cx)),b=Math.max(...sup.map(w=>w.cx));return c<a-1||c>b+1}
 function rdObCeil(B,o,P,Pp,off){const sg=B.sg,gy=B.start[1]+17,c0=o.x,c1=o.x+o.len,fb2=Math.max(B.fb,P+off);
  if(fb2+17>c0&&fb2-17<c1&&(PAL+BXH+(B.bh||0))>o.C)return"box";
  const a=B.start[0]+sg*c0,b=B.start[0]+sg*c1,sh=sg*(P-Pp),xa=Math.min(a,b)-sh,xb=Math.max(a,b)-sh;let top=1e9;
@@ -996,10 +1010,14 @@ function rdObStep(B,P,dt){const Pin=P,O=B.obs;if(!O||B.done)return P;
      else{P=lock?Math.min(P,Pp):Math.min(P,fbMax-off);
       if(dP>1e-6&&(!O.hw||now-O.hw>2200)){O.hw=now;rdFlash(sp<vmin?"🧱 Too slow! You need more speed.":(o.hits?"🧱 Back up, then hit it again fast!":"🧱 Back up first, then ram it fast!"))}}}}}
   else if(o.k==="ceil"){
-   if(o.st==="hid"&&boxF+17>=o.x-RDOB_CSEE){o.st="down";o.t0=now;setTimeout(()=>rdObShake(380),110);let why=null;try{why=rdObCeil(B,o,Pp,Pp,off)}catch(e){}
+   if(o.st==="hid"&&boxF+17>=o.x-RDOB_CSEE){o.st="down";o.t0=now;o.C=PAL+BXH+o.gaps[Math.floor(Math.random()*o.gaps.length)]/CMU;setTimeout(()=>rdObShake(380),110);let why=null;try{why=rdObCeil(B,o,Pp,Pp,off)}catch(e){}
     if(why){o.st="lift";o.t0=now;rdFlash("💥 The ceiling fell on you!");rdLoseHeart(B,"The ceiling fell on you!")}else rdFlash("⬇️ The ceiling dropped! Lower your arm to pass.")}
    if(o.st==="down"&&P>Pp+1e-6&&now-o.t0>150){let why=null;try{why=rdObCeil(B,o,P,Pp,off)}catch(e){}
-    if(why){P=Pp;if(!O.hc||now-O.hc>2200){O.hc=now;rdFlash(why==="box"?"⬇️ The box is too high! Lower it.":"⬇️ Too tall! Lower your arm.")}}}}});
+    if(why){P=Pp;if(!O.hc||now-O.hc>2200){O.hc=now;rdFlash(why==="box"?"⬇️ The box is too high! Lower it.":"⬇️ Too tall! Lower your arm.")}}}}
+  else if(o.k==="floor"){const cyc=o.cl+RDOB_WARN+o.op,t=((now-o.t0)/1000)%cyc;o.st=t<o.cl?"closed":t<o.cl+RDOB_WARN?"warn":"open";
+   if(o.st==="open"&&Math.abs(P+off-(o.x+o.len/2))<260){let fall=false;try{fall=rdObFloorFall(B,o)}catch(e){}
+    if(fall){o.t0=now;o.st="closed";rdObShake(300);rdFlash("🕳️ The floor opened under you!");rdLoseHeart(B,"The floor opened under you!")}}}
+ });
 
  const tg=B.tg;if(tg){const ph13=B.ph===1||B.ph===3,endX=(B.ph===3?B.du-38:B.du)-14,blk=P!==Pin;
   if(ph13&&dP<-1e-6&&!tg.back&&!O.list.some(o=>o.k==="wall"&&o.st==="up"))rdObTg(B,"back");
@@ -1019,7 +1037,10 @@ function rdObDraw(){const B=bat;if(!B||!B.obs||!B.obs.list||!B.obs.list.length)r
    h+=`<g opacity="${op.toFixed(2)}"${tr}><rect x="${cx-hf}" y="${gy-hh}" width="${W}" height="${hh}" fill="#a85a3a" stroke="#4a2417" stroke-width="2"/>${br}${o.hits?`<path d="M${cx-hf} ${gy-40} l5 -12 l-3 -10 l6 -14 l-4 -12 l7 -16 M${cx+hf} ${gy-70} l-5 -10 l3 -12 l-6 -12 M${cx-3} ${gy-130} l4 -10 l-3 -12 l5 -12" stroke="#1f0f08" stroke-width="2" fill="none"/>`:""}</g>`}
   else if(o.k==="ceil"){let p=Math.min(1,(now-o.t0)/130),yb=gy-o.C-(1-p)*(1-p)*320;if(o.st==="lift"){const q=Math.min(1,(now-o.t0)/250);if(q>=1){o.st="hid";return}yb=gy-o.C-q*q*320}const xa=Math.min(X(o.x),X(o.x+o.len)),w=o.len;let hc="";
    for(let x=0;x+8<=w;x+=8)hc+=`<line x1="${xa+x}" y1="${yb}" x2="${xa+x+8}" y2="${yb-8}" stroke="#fde68a" stroke-width="2"/>`;
-   h+=`<g><rect x="${xa}" y="${yb-500}" width="${w}" height="500" fill="#3b4a63" stroke="#0f172a" stroke-width="2"/><rect x="${xa}" y="${yb-9}" width="${w}" height="9" fill="#475569" stroke="#0f172a"/>${hc}</g>`}});
+   h+=`<g><rect x="${xa}" y="${yb-500}" width="${w}" height="500" fill="#3b4a63" stroke="#0f172a" stroke-width="2"/><rect x="${xa}" y="${yb-9}" width="${w}" height="9" fill="#475569" stroke="#0f172a"/>${hc}</g>`}
+  else if(o.k==="floor"){const xa=Math.min(X(o.x),X(o.x+o.len)),w=o.len;
+   if(o.st==="open")h+=`<rect x="${xa}" y="${gy-1}" width="${w}" height="80" fill="#02060f" stroke="#000"/><rect x="${xa-3}" y="${gy-1}" width="3" height="80" fill="#5b4526"/><rect x="${xa+w}" y="${gy-1}" width="3" height="80" fill="#5b4526"/>`;
+   else{const bl=o.st==="warn"&&Math.floor(now/140)%2===0;h+=`<rect x="${xa}" y="${gy}" width="${w}" height="7" fill="${bl?"#f59e0b":"#6b5030"}" stroke="#3b2a14"/><line x1="${xa}" y1="${gy+3.5}" x2="${xa+w}" y2="${gy+3.5}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3 3"/>`+(o.st==="warn"?`<text class="keep" x="${xa+w/2}" y="${gy-5}" font-size="11" text-anchor="middle" fill="#fbbf24">⚠️</text>`:"")}}});
  if(h)sv.insertAdjacentHTML("beforeend",h)}
 
 /* ===== TAG PANEL (stage 7) ===== */
@@ -1063,12 +1084,13 @@ function rdTagsFinish(B){if(!B||!B.road||!B.r||!B.r.win||!B.rdwin||B.tagsDone)re
  state.tags=state.tags||{};const key=rdTagKey(B),got=state.tags[key]=state.tags[key]||{},fresh=ok.filter(t=>!got[t.id]);ok.forEach(t=>got[t.id]=1);save();
  const res=el("bres");if(res)res.insertAdjacentHTML("beforeend",`<div class="smsg good">🏷️ Task completed: ${ok.map(t=>t.ic+" "+t.n+(fresh.includes(t)?" (new!)":"")).join(" · ")}</div>`);
  try{rdTagsRefresh()}catch(e){}}
-const _bRes41=bResult;
-bResult=function(){_bRes41();try{rdTagsFinish(bat)}catch(e){}};
-rdDraw=function(){_rdDraw41();try{rdObDraw()}catch(e){}};
-fight=function(ai,pk){_fight41(ai,pk);const B=bat;if(!B||!B.road||B.done)return;
- B.aBase=B.a;B.a=Object.assign({},B.aBase);B.obs={ph:0,list:[],R:0,Pp:0};B.tg={};try{rdTagsInit(B)}catch(e){}
- if(rdObOn(B,"ceil")&&B.vb0){B.vb0[1]-=40;B.vb0[3]+=40}};
+const _bRes43=bResult;
+bResult=function(){_bRes43();try{rdTagsFinish(bat)}catch(e){}};
+rdDraw=function(){_rdDraw43();try{rdObDraw()}catch(e){}};
+fight=function(ai,pk){_fight43(ai,pk);const B=bat;if(!B||!B.road||B.done)return;
+ B.aBase=B.a;B.a=Object.assign({},B.aBase);{const pool=["wall","ceil","fakefl","heavy"].filter(k=>rdObsOn(B.aBase,k)).sort(()=>Math.random()-.5);B.ev=pool.slice(0,pool.length?1+Math.floor(Math.random()*pool.length):0)}
+ B.obs={ph:0,list:[],R:0,Pp:0};B.tg={};try{rdTagsInit(B)}catch(e){}
+ if(rdObOn(B,"ceil")&&B.vb0){const mg=Math.max(...rdObGaps(B.aBase)),ext=Math.min(110,Math.max(40,Math.round(PAL+BXH+mg/CMU-47)));B.vb0[1]-=ext;B.vb0[3]+=ext}};
 
 
 /* ===== 42H: STAGE 1 - THE ARENA FOLLOWS YOUR REAL CIRCUIT WIRING =====
@@ -1112,7 +1134,7 @@ const up=()=>{s._d=0;s.classList.remove("on")};s.addEventListener("pointerup",up
 addEventListener("scroll",place,{passive:true});
 setInterval(()=>{const on=!!document.getElementById("sv");s.style.display=on?"block":"none";if(on)place();const sv0=document.getElementById("sv");if(sv0)sv0.classList.toggle("mechsv",typeof sim==="object"&&!!sim&&!!sim.p&&sim.p.type==="m")},400)})();
 
-const CDT=0.05,RQAPPV="42H";
+const CDT=0.05,RQAPPV="43H";
 function motorStrip(mo){const run=mo&&Math.abs(mo.v)>=0.5&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
