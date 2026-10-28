@@ -233,7 +233,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v100";
+const RQCACHE="roboquest-v101";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -888,7 +888,8 @@ function rdBoxStep(B,dt){B.ptop=B.ptopN||{};B.ptopN={};B.lg=B.lgn===undefined?1:
  B.grip=null;
 let best=pal,sup=null,supx=0;
  const isFk=p=>{const q=sim.p.parts.find(z=>z.id===p.id);return !!q&&(q.t==="rack"||q.t==="brick")},consider=(p,x0,x1,off)=>{if(p.cls==="rh")return;if(B.dropPid){if(p.id===B.dropPid||(B.dropGrp&&B.dropGrp.has(p.id)))return;const pt=sim.p.parts.find(q=>q.id===p.id);if(pt&&(pt.t==="arm"||pt.t==="servo"||pt.t==="pincher"))return}const c=clipStrip(p.pts,x0,x1);if(c.length<3)return;let top=1e9,sx=0;c.forEach(q=>{if(q.y<top)top=q.y});c.forEach(q=>sx+=q.x);sx/=c.length;const cand=top-off;let win=(B.sup&&B.sup.id===p.id)?40:(isFk(p)?BXH+3:RISE);{const pv=B.ptop[p.id],nw=B.ptopN[p.id];B.ptopN[p.id]=nw===undefined?cand:Math.min(nw,cand);if(pv!==undefined&&pv>cand&&pv>=bot0-win)win=Math.max(win,pv-cand+4)}if(cand>=bot0-win&&cand<=best&&(cand<best||!sup)){best=cand;sup=p.id;supx=sx}};
- polys.forEach(p=>{const w=isFk(p)?21:15;consider(p,bx-w,bx+w,0)});
+ if(B.sup)polys.forEach(p=>{if(p.id===B.sup.id){const w=isFk(p)?21:15;consider(p,bx-w,bx+w,0)}});
+ if(!(B.sup&&sup===B.sup.id))polys.forEach(p=>{const w=isFk(p)?21:15;consider(p,bx-w,bx+w,0)});
  if(B.slip){const rid=B.slip;if((B.bh||0)>1&&B.rkUp&&B.rkUp[rid]&&B.ASrk&&!B.hook&&!B.grip){B.ASrk[rid]=(B.ASrk[rid]||0)-B.rkUp[rid]*RDRK_SINK*Math.min(0.05,dt/(B.ts||1));B.weak=B.slipCp}else B.slip=null}
  if(!B.slip&&sup&&(best<bot0-0.5||(B.sup&&B.sup.id===sup&&(B.bh||0)>1&&rdCap(B,sup,supx).kg/Math.max(0.01,B.a.mass)<0.5))){const cp=rdCap(B,sup,supx);if(!rdLq(B,cp.kg)){B.weak=cp;const rid=cp.how==="motor"?rdRackOf(sup):null;if(rid&&(B.bh||0)>1&&B.rkUp&&B.rkUp[rid]&&B.ASrk){B.slip=rid;B.slipCp=cp}else{best=bot0;sup=null}}}
  let bot=best;if(bot>bot0)bot=Math.min(bot,bot0+520*dt);
@@ -932,7 +933,7 @@ bLoop=function(){const B=bat;if(!B||!B.road){const q=_bLoop1();if(B&&B.mshake&&!
  let P=B.v0*B.T;const hi=du-(B.off||0);if(P>hi){P=hi;B.T=P/B.v0}if(P<-30){P=-30;B.T=P/B.v0}if(B.obs){const P0=P;P=rdObStep(B,P,dt);if(P!==P0)B.T=P/B.v0}B.Pf=P;
  const strain=contact&&B.pw&&(!c.fOK||c.F/need<1.25);
  let note="";
- const mvd=B.Pl===undefined||P>B.Pl+1e-6;B.Pl=P;if((B.ph&1)&&!B.noTip&&mvd&&!B.grip&&!B.hook&&!(B.sup&&(B.bh||0)>2)&&P+(B.off||0)>B.fb)B.fb=P+(B.off||0);
+ const Pprev=B.Pl,mvd=B.Pl===undefined||P>B.Pl+1e-6;B.Pl=P;if((B.ph&1)&&!B.noTip&&mvd&&!B.grip&&!B.hook&&!(B.sup&&(B.bh||0)>2)&&P+(B.off||0)>B.fb&&(Pprev===undefined||B.fb>=Pprev+(B.off||0)-8))B.fb=P+(B.off||0);
  const pay=()=>{const q=100;B.pts+=q;return q};
  rdBoxFlow(B,P,pay,r);
  rdFlagList(B).forEach((pos,k)=>{const key=B.ph+":"+k;if(!B.cpGot[key]&&((B.ph&1)?B.fb>=pos:P<=pos)){B.cpGot[key]=1;B.cpx=pos;B.pts+=25;rdFlash("🚩 Checkpoint! +25 ⭐")}});
@@ -1295,7 +1296,7 @@ const up=()=>{s._d=0;s.classList.remove("on")};s.addEventListener("pointerup",up
 addEventListener("scroll",place,{passive:true});
 setInterval(()=>{const on=!!document.getElementById("sv");s.style.display=on?"block":"none";if(on)place();const sv0=document.getElementById("sv");if(sv0)sv0.classList.toggle("mechsv",typeof sim==="object"&&!!sim&&!!sim.p&&sim.p.type==="m")},400)})();
 
-const CDT=0.05,RQAPPV="56H";
+const CDT=0.05,RQAPPV="57H";
 function motorStrip(mo){const run=mo&&Math.abs(mo.v)>=0.5&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
