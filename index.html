@@ -233,7 +233,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v97";
+const RQCACHE="roboquest-v98";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=35").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -607,7 +607,7 @@ if(!cands.length){o.fail="nowork";o.msg="Nothing pushes the box. Put a gear besi
 let best=cands[0];cands.forEach(c=>{if(c.score>best.score)best=c});o.cm=best;o.win=best.fOK&&best.tOK&&best.dOK;return o}
 function mechatronics(){el("screen").innerHTML=nav()+hero('car','🤖 Mechatronics','Electrical and mechanical working together.','#d8f0e0')+`<div class="card"><button class="primary" onclick="simulation('x')">🔌 Mechatronics Simulation</button><button class="bpic" onclick="mbattle()"><img src="${BT.btn}" alt=""><span>⚔️ Battle Mode</span></button></div>`}
 function mbattle(){const A=state.arenas;el("screen").innerHTML=nav()+`<button onclick="mechatronics()">← Mechatronics</button><div class="bhero"><div class="bt"><span class="pill">GAME MODE</span><h1>MECHANICAL<br><em>BATTLE</em></h1><p>Build. Test. Win!</p></div><img src="${BT.banner}" alt=""></div><h3 class="arh">⚙️ ARENAS <small>Choose your challenge</small></h3>`+A.map((a,i)=>a.locked?`<div class="arena locked"><img src="${BT.box}" alt=""><div><span class="pill">LOCKED</span><h3>${esc(a.name)}</h3><p>Your teacher will open this arena for you.</p></div><svg class="padlock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="#cbd5e1"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="#cbd5e1" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16" r="1.6" fill="#475569"/></svg><button class="go" disabled>LOCKED</button></div>`:`<div class="arena"><img src="${BT.box}" alt=""><div><span class="pill easy">🎮 EASY</span><h3>${esc(a.name)}</h3><p>${esc(a.story)}</p><div class="stats3"><span><b>${a.mass} kg</b>Weight</span><span><b>${a.dist} cm</b>Distance</span><span><b>${a.time} s</b>Time limit</span></div></div><button class="go" onclick="arenaScreen(${i})">🛠️ ENTER ARENA</button></div>`).join("")+`<p style="text-align:center">⚔️ Battles won: <b>${state.stats.wins||0}</b></p>`;el("screen").classList.add("dk")}
-function arenaScreen(i){if(state.arenas[i]&&state.arenas[i].locked)return;const a=state.arenas[i],P=state.projects.map((p,k)=>[p,k]).filter(([p])=>p.type==="m"||p.type==="x");el("screen").innerHTML=nav()+`<button onclick="mbattle()">← Arenas</button><div class="arena one"><img src="${BT.box}" alt=""><div><h3>${esc(a.name)}</h3><p>${esc(a.story)}</p><p><b>Mission:</b> move the ${a.mass} kg box from A to B (${a.dist} cm) in ${a.time} seconds.</p></div></div><div class="card"><h3>Choose your machine</h3>${P.length?P.map(([p,k])=>`<div class="crow"><span>${p.type==="x"?"🤖":"⚙️"} ${esc(p.name)} <small class="muted">(${p.type==="x"?p.e.parts.length+p.m.parts.length:p.parts.length} parts)</small></span><button class="primary" onclick="fight(${i},${k})">⚔️ Fight!</button></div>`).join(""):'<p class="muted">You have no mechanical or mechatronics projects yet. Build one in Mechanical World or Mechatronics → Simulation.</p>'}</div>`;el("screen").classList.add("dk")}
+function arenaScreen(i){if(state.arenas[i]&&state.arenas[i].locked)return;const a=state.arenas[i],P=state.projects.map((p,k)=>[p,k]).filter(([p])=>p.type==="m"||p.type==="x");el("screen").innerHTML=nav()+`<button onclick="mbattle()">← Arenas</button><div class="arena one"><img src="${BT.box}" alt=""><div><h3>${esc(a.name)}</h3><p>${esc(a.story)}</p><p><b>Mission:</b> move the ${a.mass} kg box from A to B (${a.dist} cm) in ${a.time} seconds.${rdObsOn(a,"multi")?" Each round has 2 to 5 boxes: carry them all to B and stack at least two on top of each other.":""}</p></div></div><div class="card"><h3>Choose your machine</h3>${P.length?P.map(([p,k])=>`<div class="crow"><span>${p.type==="x"?"🤖":"⚙️"} ${esc(p.name)} <small class="muted">(${p.type==="x"?p.e.parts.length+p.m.parts.length:p.parts.length} parts)</small></span><button class="primary" onclick="fight(${i},${k})">⚔️ Fight!</button></div>`).join(""):'<p class="muted">You have no mechanical or mechatronics projects yet. Build one in Mechanical World or Mechatronics → Simulation.</p>'}</div>`;el("screen").classList.add("dk")}
 function fight(ai,pk){window.RQKEEP=window.RQLS;const a=state.arenas[ai],p=state.projects[pk],r=evalBattle(p,a),c=r.cm;el("screen").innerHTML=nav()+`<div class="fhead"><button onclick="arenaScreen(${ai})">← Back</button><b>🛠️ ${esc(p.name)}</b></div><div class="rotmsg">↻ Turn your phone sideways for the best view</div><div class="hud"><div><span>💪 Power</span><div class="meter"><i id="mpow"></i></div><small id="mpowt"></small></div><div><span>⏱️ Time</span><div class="meter"><i id="mtim"></i></div><small id="mtimt"></small></div><div><span>⚡ Speed</span><b id="mspd">—</b></div></div><div class="stagewrap"><svg id="sv" class="bsv"></svg><div id="bcount" class="cd"></div></div><button id="runbtn" style="display:none"></button><div id="sres" style="display:none"></div><div id="btimer" class="muted" style="margin:6px 0;text-align:center"></div><div id="bres"></div>`;el("screen").classList.add("dk");if(!window.RQLS){window.RQLS=true;document.body.classList.add("ls");rqLandscape(true)}if(c){const need=c.need||r.Freq,pw=Math.min(1,c.F/Math.max(0.01,need));el("mpow").style.width=(pw*100)+"%";el("mpow").style.background=c.fOK?"#7ed321":"#ef4444";el("mpowt").textContent=`${c.fOK?"":"😓 Struggling: "}${(+c.F.toFixed(1))} N of ${(+need.toFixed(1))} N needed`;el("mspd").textContent=(+c.v.toFixed(1))+" cm/s";el("mtimt").textContent="limit "+a.time+" s"}else{el("mpowt").textContent="no machine power";el("mtimt").textContent="limit "+a.time+" s"}
 const P=r.simp,B={a,r,ai,pk,done:false,ts:1,tend:1.8,u:1,F0:null};
 if(c&&c.kind==="car"){const car=c.car,sg=car.v>0?1:-1,bb=bboxParts(P.parts),front=sg>0?bb.x1:bb.x0;B.kind="car";B.hz=true;B.sg=sg;B.start=[front+sg*23,car.gy-17];B.du=a.dist/CMU;B.v=Math.abs(car.v);B.trav=B.du;car.lo=-1e9;car.hi=1e9;if(c.fOK){B.tend=Math.max(0.5,Math.min(B.du/B.v,a.time/SPD))}else{const q=c.F/Math.max(0.01,c.need||r.Freq);if(q>=0.5&&!c.slip){const g=0.35*(q-0.5)/0.5;B.g=g;car.v*=g;B.v=Math.abs(car.v);Object.values(r.res.rot).forEach(x=>{x.w*=g});B.tend=Math.max(0.5,Math.min(a.time/SPD,0.85*B.du/Math.max(B.v,1e-6)))}else{B.tend=Math.max(1.8,a.time/SPD);car.v=0;B.v=0;if(!c.slip)Object.values(r.res.rot).forEach(x=>{x.w=0})}B.stuck=true}B.ts=Math.max(1,B.tend/6)}else if(c&&c.k){const rk=P.parts.find(o=>o.id===c.rid),hz=!rk.rot,sg=c.k.v>0?1:-1,L=(rk.len-1)*LP,k=c.k;B.rk=rk;B.hz=hz;B.sg=sg;B.F0=hz?[sg>0?rk.i*LP+L+6:rk.i*LP-6,rk.j*LP]:[rk.i*LP,sg>0?rk.j*LP+L+6:rk.j*LP-6];B.start=[B.F0[0]+(hz?sg*17:0),B.F0[1]+(hz?0:sg*17)];B.du=a.dist/CMU;B.v=Math.abs(k.v);B.trav=sg>0?k.hi:-k.lo;
@@ -851,7 +851,7 @@ function rdCap(B,id,cx){const P=sim.p.parts;let o=P.find(q=>q.id===id);if(o&&o.t
   if(F!==null&&F!==undefined&&(best===null||F>best))best=F});
   if(best!==null)return{kg:best/9.8,how:"motor"}}
  const c=B.r&&B.r.cm,F=c&&c.F!==undefined?c.F:0;return{kg:F/9.8,how:"motor"}}
-function rdBoxStep(B,dt){B.ptop=B.ptopN||{};B.ptopN={};B.lg=B.lgn===undefined?1:B.lgn;B.lstr=!!B.lstrn;B.lgn=1;B.lstrn=false;if(B.ph===2||B.noTip===undefined)return;const sg=B.sg,gy=B.start[1]+17,bx=B.start[0]+sg*B.fb,pal=gy-PAL,bot0=pal-(B.bh||0);
+function rdBoxStep(B,dt){B.ptop=B.ptopN||{};B.ptopN={};B.lg=B.lgn===undefined?1:B.lgn;B.lstr=!!B.lstrn;B.lgn=1;B.lstrn=false;if(!(B.ph&1)||B.noTip===undefined)return;const sg=B.sg,gy=B.start[1]+17,bx=B.start[0]+sg*B.fb,pal=gy-PAL,bot0=pal-(B.bh||0);
  const polys=rdPolys();B.weak=false;
  const xL=bx-17,xR=bx+17,bt0=bot0-BXH;
  const hk=polys.filter(p=>p.cls==="rh"),hinfo=h=>{let y1=-1e9,qx=0;h.pts.forEach(q=>{y1=Math.max(y1,q.y);qx+=q.x});return{y:y1,x:qx/h.pts.length}};
@@ -907,9 +907,9 @@ function rdDraw(){const B=bat,sv=el("sv"),sg=B.sg,X=f=>B.start[0]+sg*f,Y=B.start
  fl=(x,col,txt)=>`<line x1="${x}" y1="${Y-34}" x2="${x}" y2="${Y+14}" stroke="#cbd5e1" stroke-width="3"/><path d="M${x} ${Y-34} l${22*sg} 8 l${-22*sg} 8z" fill="${col}"/><text class="keep" x="${x-4}" y="${gy+28}" font-size="13" font-weight="700" fill="#eaf2ff">${txt}</text>`,st=10/CMU;let h="";
  for(let k=st;k<du-1;k+=st)h+=`<line x1="${X(k)}" y1="${gy}" x2="${X(k)}" y2="${gy+8}" stroke="#94a3b8" stroke-width="2"/><text class="keep" x="${X(k)-9}" y="${gy+19}" font-size="9" fill="#94a3b8">${Math.round(k*CMU)}cm</text>`;
  h+=fl(X(-24),"#2563eb","A")+fl(X(du+24),"#16a34a","B");h+=rdFlagsSvg(B,X,Y);
- h+=rdBox(X(B.ph===1?B.fb:du),Y,B.a.mass,B.ph===1?B.bh:0);if(B.ph===3)h+=rdBox(X(B.fb),Y,B.a.mass,B.bh);
+ h+=rdBoxes(B,X,Y);
  sv.insertAdjacentHTML("beforeend",h)}
-function rdFlagList(B){const hi=(B.ph===3?B.du-38:B.du);return B.ph===2?[.75,.5,.25].map(f=>hi*f):[.25,.5,.75].map(f=>hi*f)}
+function rdFlagList(B){const hi=B.du;return(B.ph&1)?[.25,.5,.75].map(f=>hi*f):[.75,.5,.25].map(f=>hi*f)}
 function rdFlagsSvg(B,X,Y){let h="";const sg=B.sg;rdFlagList(B).forEach((pos,k)=>{const got=!!B.cpGot[B.ph+":"+k],col=got?"#22c55e":"#facc15",x=X(pos);h+=`<line x1="${x}" y1="${Y-26}" x2="${x}" y2="${Y+14}" stroke="#cbd5e1" stroke-width="2.5"/><path d="M${x} ${Y-26} l${16*sg} 6 l${-16*sg} 6z" fill="${col}" stroke="#0f172a" stroke-width=".8"/>`});return h}
 function rdLoseHeart(B,why){if(B&&!B.hit&&!B.done)B.hit=why||"Ouch!"}
 function rdLq(B,kg){const q=kg/Math.max(0.01,B.a.mass);if(q>=1)return true;if(q>=0.5){const g=Math.max(0.05,0.35*(q-0.5)/0.5);B.lgn=Math.min(B.lgn===undefined?1:B.lgn,g);B.lstrn=true;return true}return false}
@@ -919,29 +919,27 @@ bLoop=function(){const B=bat;if(!B||!B.road){const q=_bLoop1();if(B&&B.mshake&&!
  const now=performance.now(),a=B.a,r=B.r,c=r.cm,du=B.du,Tlim=a.time/SPD,need=c.need||r.Freq;
  if(!B.go){B.go=true;B.last=now;document.querySelectorAll("#bbtns button,#rdpad button").forEach(b=>b.disabled=false)}
  const dt=Math.min(0.1,(now-B.last)/1000)*B.ts;B.last=now;B.pt+=dt;B.dtl=dt;
- if(B.hit){const w=B.hit;B.hit=null;B.hearts--;if(B.hearts>0){const cx=B.cpx||0;B.T=cx/B.v0;B.Pl=cx;if(B.ph!==2)B.fb=cx>0?cx+(B.off||0):0;B.bh=0;B.sup=null;B.hook=null;B.grip=null;B.hookLock=null;B.gripLock=null;B.dropPid=null;rdFlash("💔 "+w+" Back to the checkpoint")}}
- if(!B.mm)rdInitMotors(B);const selM=B.ch[B.ci],isMot=!!selM&&selM.t==="motor",selKey=isMot&&selM.id?"mt"+selM.id:null,isPrim=isMot&&(!selKey||!B.prim||selKey===B.prim||!B.mm[selKey]),want=(B.pw&&isPrim)?B.padDir:0,contact=want>0&&B.ph!==2&&!B.noTip&&B.Pf+(B.off||0)>=B.fb-0.5;let f=0;
+ if(B.hit){const w=B.hit;B.hit=null;B.hearts--;if(B.hearts>0){const cx=B.cpx||0;B.T=cx/B.v0;B.Pl=cx;if(B.ph&1)B.fb=cx>0?cx+(B.off||0):0;B.bh=0;B.sup=null;B.hook=null;B.grip=null;B.hookLock=null;B.gripLock=null;B.dropPid=null;rdFlash("💔 "+w+" Back to the checkpoint")}}
+ if(!B.mm)rdInitMotors(B);const selM=B.ch[B.ci],isMot=!!selM&&selM.t==="motor",selKey=isMot&&selM.id?"mt"+selM.id:null,isPrim=isMot&&(!selKey||!B.prim||selKey===B.prim||!B.mm[selKey]),want=(B.pw&&isPrim)?B.padDir:0,contact=want>0&&(B.ph&1)&&!B.noTip&&B.Pf+(B.off||0)>=B.fb-0.5;let f=0;
  if(want){f=contact?(c.fOK?1:(B.g||0)):1;B.T+=dt*f*want*(B.lg||1)}
- let P=B.v0*B.T;const hi=(B.ph===3?du-38:du)-(B.off||0);if(P>hi){P=hi;B.T=P/B.v0}if(P<-30){P=-30;B.T=P/B.v0}if(B.obs){const P0=P;P=rdObStep(B,P,dt);if(P!==P0)B.T=P/B.v0}B.Pf=P;
+ let P=B.v0*B.T;const hi=du-(B.off||0);if(P>hi){P=hi;B.T=P/B.v0}if(P<-30){P=-30;B.T=P/B.v0}if(B.obs){const P0=P;P=rdObStep(B,P,dt);if(P!==P0)B.T=P/B.v0}B.Pf=P;
  const strain=contact&&B.pw&&(!c.fOK||c.F/need<1.25);
  let note="";
- const mvd=B.Pl===undefined||P>B.Pl+1e-6;B.Pl=P;if(B.ph!==2&&!B.noTip&&mvd&&!B.grip&&!B.hook&&P+(B.off||0)>B.fb)B.fb=P+(B.off||0);
+ const mvd=B.Pl===undefined||P>B.Pl+1e-6;B.Pl=P;if((B.ph&1)&&!B.noTip&&mvd&&!B.grip&&!B.hook&&P+(B.off||0)>B.fb)B.fb=P+(B.off||0);
  const pay=()=>{const q=100;B.pts+=q;return q};
- if(B.ph===1&&B.fb>=du-0.5&&(B.bh||0)<3){B.fb=du;const q=pay();B.ph=2;B.cpx=du;B.bh=0;B.sup=null;B.hook=null;B.grip=null;rdFlash("📦 Delivered! Go back to A and pick up the next box.")}
- else if(B.ph===2&&P<=0.5){const q=pay();B.ph=3;B.cpx=0;B.fb=0;B.bh=0;B.sup=null;B.hook=null;B.grip=null;rdFlash("🎁 A new box! +"+q+" ⭐")}
- else if(B.ph===3&&B.fb>=du-38-0.5&&(B.bh||0)<3){const q=pay();B.done=true;r.win=true;r.msg="";B.rdwin=true}
- rdFlagList(B).forEach((pos,k)=>{const key=B.ph+":"+k;if(!B.cpGot[key]&&(B.ph===2?P<=pos:B.fb>=pos)){B.cpGot[key]=1;B.cpx=pos;B.pts+=25;rdFlash("🚩 Checkpoint! +25 ⭐")}});
+ rdBoxFlow(B,P,pay,r);
+ rdFlagList(B).forEach((pos,k)=>{const key=B.ph+":"+k;if(!B.cpGot[key]&&((B.ph&1)?B.fb>=pos:P<=pos)){B.cpGot[key]=1;B.cpx=pos;B.pts+=25;rdFlash("🚩 Checkpoint! +25 ⭐")}});
  let over=B.done?"win":(B.hearts<=0?"hearts":(B.pt>=Tlim?"time":""));
  sim.t0=now-B.T*1000;rdMotion(B,dt);bSyncServos();drawM(true);rdMeasure(B);rdBoxStep(B,dt);rdUsTick(B);if(B.lstrn&&!B.weak&&(!B.wn2||now-B.wn2>2500)){B.wn2=now;rdFlash("😓 Straining! Lifting slowly")}rdDraw();rdCam();
  if((strain||B.lstr)&&!over){const cg=el("car"),m=/translate\(\s*(-?[\d.]+)/.exec(cg.getAttribute("transform")||""),x=m?+m[1]:0;cg.setAttribute("transform",`translate(${(x+Math.sin(now/35)*1.8).toFixed(1)} ${(Math.sin(now/29)*0.8).toFixed(1)})`)}
  const hasB=B.proj.e.parts.some(o=>o.t==="btn");
  {const hh=el("rdh"),hs="❤️".repeat(Math.max(0,B.hearts))+"🖤".repeat(Math.max(0,2-B.hearts));if(hh&&hh.textContent!==hs)hh.textContent=hs}
- el("btimer").textContent=`Part ${Math.min(B.ph,3)} of 3: ${RDN[Math.min(B.ph,3)]}  ·  ⏱️ ${Math.min(B.pt*SPD,a.time).toFixed(1)} s of ${a.time} s  ·  ⭐ ${B.pts}  ·  ${B.pw?((strain||B.lstr)?"😤 Straining!":"⚡ Powered"):"Hold Front or Back"}${B.hook?"  ·  🪝 Hooked the box":B.grip?"  ·  ✊ Gripping the box":(B.bh>1?"  ·  📦 Lifting the box":"")}`;
+ el("btimer").textContent=`${rdPartTxt(B)}  ·  ⏱️ ${Math.min(B.pt*SPD,a.time).toFixed(1)} s of ${a.time} s  ·  ⭐ ${B.pts}  ·  ${B.pw?((strain||B.lstr)?"😤 Straining!":"⚡ Powered"):"Hold Front or Back"}${B.hook?"  ·  🪝 Hooked the box":B.grip?"  ·  ✊ Gripping the box":(B.bh>1?"  ·  📦 Lifting the box":"")}`;
  if(el("mtim"))el("mtim").style.width=Math.min(100,B.pt*SPD/a.time*100)+"%";
  const rm=el("rdmap");if(rm){const x=16+268*Math.max(0,Math.min(1,P/du)),bx=16+268*Math.max(0,Math.min(1,B.fb/du));rm.innerHTML=`<svg viewBox="0 0 300 28" style="width:100%;height:28px;display:block"><line x1="16" y1="14" x2="284" y2="14" stroke="#475569" stroke-width="4" stroke-linecap="round"/><text class="keep" x="16" y="9" font-size="9" fill="#93c5fd" text-anchor="middle">A</text><text class="keep" x="284" y="9" font-size="9" fill="#86efac" text-anchor="middle">B</text><rect x="${bx-4}" y="10" width="8" height="8" fill="#d6a56b"/><circle cx="${x}" cy="14" r="5" fill="#f97316" stroke="#fff"/></svg>`}
- if(over){B.done=true;if(over==="hearts"){r.win=false;r.msg="💔 No hearts left in part "+B.ph+" of 3: "+RDN[B.ph]+"."}if(over==="time"){r.win=false;r.msg="⏱️ Time ran out in part "+B.ph+" of 3: "+RDN[B.ph]+"."}
+ if(over){B.done=true;if(over==="hearts"){r.win=false;r.msg="💔 No hearts left. "+rdPartTxt(B)+"."}if(over==="time"){r.win=false;r.msg="⏱️ Time ran out. "+rdPartTxt(B)+"."+rdNeedStack(B)}
   document.querySelectorAll("#bbtns button,#rdpad button").forEach(b=>b.disabled=true);{const q=el("bcount");if(q){q.textContent="";q.className="cd"}}bResult();
-  const rc=document.querySelector("#bres .rescard p");if(rc)rc.textContent=r.win?`Your machine pushed the box to B, drove back, and delivered a second box. ${B.pts} ⭐ points!`:`${r.msg} You scored ${B.pts} ⭐ so far.`;return}
+  const rc=document.querySelector("#bres .rescard p");if(rc)rc.textContent=r.win?`Your machine delivered all ${B.nb} boxes${B.needStack?` and built a stack of ${B.maxStk}`:""}! ${B.pts} ⭐ points!`:`${r.msg} You scored ${B.pts} ⭐ so far.`;return}
  requestAnimationFrame(bLoop)};
 
 /* the battle variable `bat` does not exist until the first fight, so always read it through this */
@@ -959,10 +957,10 @@ function rdObShake(ms){const s=el("sv");if(!s||s.classList.contains("shake"))ret
 function rdObRecalc(B){const keep=sim;try{const r3=evalBattle(B.proj,B.a),c3=r3&&r3.cm,c=B.r&&B.r.cm;if(!c3||!c||c3.kind!=="car")return;c.fOK=c3.fOK;c.need=c3.need;if(!c3.fOK){const q=c3.F/Math.max(0.01,c3.need||r3.Freq);B.g=(q>=0.5&&!c3.slip)?0.35*(q-0.5)/0.5:0}}catch(e){}finally{sim=keep}}
 /* the box weighs 0.5 kg more for every checkpoint flag passed in this part; the strength check is redone each time */
 function rdObWeight(B){let want=B.aBase.mass;
- if(rdObOn(B,"heavy")&&(B.ph===1||B.ph===3)){let n=0;for(const k in B.cpGot){if(B.cpGot[k]&&k.indexOf(B.ph+":")===0)n++}want=+(B.aBase.mass+RDOB_KG*n).toFixed(2)}
+ if(rdObOn(B,"heavy")&&(B.ph&1)){let n=0;for(const k in B.cpGot){if(B.cpGot[k]&&k.indexOf(B.ph+":")===0)n++}want=+(B.aBase.mass+RDOB_KG*n).toFixed(2)}
  if(want!==B.a.mass){const up=want>B.a.mass;B.a.mass=want;rdObRecalc(B);if(up)rdFlash("🚩 Checkpoint! 🏋️ Box now "+(+want.toFixed(1))+" kg")}}
 /* if the box becomes too heavy for what is holding it, it slips and falls */
-function rdObDrop(B){if(B.ph===2||B.noTip===undefined)return;
+function rdObDrop(B){if(!(B.ph&1)||B.noTip===undefined)return;
  const m=Math.max(0.01,B.a.mass),sg=B.sg,bx=B.start[0]+sg*B.fb,weak=kg=>kg/m<0.5;let fell=false;
  if(B.hook){const cp=rdCap(B,B.hook.id,B.hook.x);if(weak(cp.kg)){B.hookLock=B.hook.id;B.hook=null;fell=true}}
  else if(B.grip&&B.grip.pid){const cp=rdCap(B,B.grip.pid,bx);if(weak(cp.kg)){const pc=sim.p.parts.find(q=>q.id===B.grip.pid&&q.t==="pincher"),sv=pc&&sim.p.parts.find(q=>q.t==="servo"&&q.i===pc.i&&q.j===pc.j);B.gripLock={pid:B.grip.pid,ang:sv?sv.ang:90};B.dropPid=B.grip.pid;B.grip=null;fell=true}}
@@ -980,7 +978,7 @@ function rdLdrFeed(E,f){const B=rdBat();if(!(B&&B.road&&B.obs&&B.live&&!B.done&&
 /* the distance sensor looks straight ahead and tells your circuit how many cm away the nearest wall or box is (nothing in sight = 200) */
 function rdUsRead(B,id,w){try{const m=B.proj.map.find(q=>q.id===id);if(!m)return 200;const sx=B.sg*(m.x-B.start[0])+(B.Pf||0);let best=null;const add=x=>{const d=(x-sx)*CMU;if(d>=-1&&(best===null||d<best))best=d};
  if(B.obs&&B.obs.list)B.obs.list.forEach(o=>{if(o.k==="wall"&&o.st==="up")add(o.x-RDOB_WALL_W/2);if(o.k==="rock"&&(o.st==="hid"||o.st==="warn"||o.st==="drop")){const d=(o.x-RDOB_ROCK_W/2-sx)*CMU;if(d>=-1){const e=w?Math.max(2,d-RDOB_ROCK_EARLY):d;if(best===null||e<best)best=e}}});
- if((B.ph===1||B.ph===3)&&!B.grip&&!B.hook&&(B.bh||0)<2&&B.fb>(B.Pf||0)+(B.off||0)+8)add(B.fb-17);if(B.ph===3)add(B.du-17);
+ if((B.ph&1)&&!B.grip&&!B.hook&&(B.bh||0)<2&&B.fb>(B.Pf||0)+(B.off||0)+8)add(B.fb-17);if(B.ph&1)(B.stk||[]).forEach(c=>add(c.x-17));
  return best===null?200:Math.max(2,Math.min(200,Math.round(best)))}catch(e){return 200}}
 function rdUsTick(B){const us=B.proj.e.parts.filter(o=>o.t==="us"&&B.proj.map.some(m=>m.id===o.id));if(!us.length)return;B.usn=B.usn||{};let chg=false,first=null;us.forEach(o=>{const d=rdUsRead(B,o.id);if(first===null)first=d;const nr=rdUsRead(B,o.id,true)<20;if(B.usn[o.id]!==nr){B.usn[o.id]=nr;chg=true}});
  if(B.obs&&B.obs.list)B.obs.list.forEach(o=>{if(o.k!=="rock"||o.det||!(o.st==="hid"||o.st==="warn"||o.st==="drop"))return;us.forEach(u=>{if(o.det)return;const m=B.proj.map.find(q=>q.id===u.id);if(!m)return;const sx=B.sg*(m.x-B.start[0])+(B.Pf||0),d=(o.x-RDOB_ROCK_W/2-sx)*CMU;if(d>=-1&&Math.max(2,d-RDOB_ROCK_EARLY)<20){o.det=true;if(rdAchAdd("rocks",1)){rdFlash("🏷️ Tag complete: 📡 Detect 50 rocks");try{rdTagsRefresh()}catch(e){}}}})});
@@ -998,8 +996,8 @@ function rdObDark(B,now){let a=0;B.obs.list.forEach(o=>{if(o.k==="dark"&&o.st===
  const W=6000+(B.du||0),sp=rdObSpots(B),R=RDOB_LIGHT_R;
  return `<defs><radialGradient id="rdkg"><stop offset="0" stop-color="#6b6b6b"/><stop offset="1" stop-color="#ffffff"/></radialGradient><mask id="rdkm" maskUnits="userSpaceOnUse" x="-3000" y="-2000" width="${W}" height="4000"><rect x="-3000" y="-2000" width="${W}" height="4000" fill="#fff"/>${sp.map(q=>`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${R}" fill="url(#rdkg)"/>`).join("")}</mask></defs><rect x="-3000" y="-2000" width="${W}" height="4000" fill="#010208" opacity="${(a*0.8).toFixed(3)}" mask="url(#rdkm)" pointer-events="none"/>`+sp.map(q=>`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="5" fill="${q.c}" opacity="${a.toFixed(2)}" pointer-events="none"/>`).join("")}
 function rdObGen(B,P){const O=B.obs,ph=B.ph;O.ph=ph;O.list=[];O.R=0;O.Pp=P;const R=rdRng("gen"+ph);if(B.dkOn){B.dkOn=false;rdObRelight(B)}
- if(ph!==1&&ph!==3)return;
- const hi=ph===3?B.du-38:B.du,run=rdObRunPx(hi),fl=[.25,.5,.75].map(f=>hi*f),pl=[],n=Math.max(1,Math.round(hi*CMU/RDOB_EVERY_CM)),sep=Math.max(26,Math.min(300,hi*0.15)),kinds=[],fgp=Math.max(1,Math.min(7,+B.aBase.floorGap||2))/CMU,fcl=Math.max(1,Math.min(8,+B.aBase.floorClosed||2)),fop=Math.max(1,Math.min(6,+B.aBase.floorOpen||2)),gaps=rdObGaps(B.aBase),nowT=performance.now(),dks=Math.max(2,Math.min(30,+B.aBase.darkSecs||6));
+ if(!(ph&1))return;
+ const hi=B.du-rdZone(B),run=rdObRunPx(hi),fl=[.25,.5,.75].map(f=>hi*f),pl=[],n=Math.max(1,Math.round(hi*CMU/RDOB_EVERY_CM)),sep=Math.max(26,Math.min(300,hi*0.15)),kinds=[],fgp=Math.max(1,Math.min(7,+B.aBase.floorGap||2))/CMU,fcl=Math.max(1,Math.min(8,+B.aBase.floorClosed||2)),fop=Math.max(1,Math.min(6,+B.aBase.floorOpen||2)),gaps=rdObGaps(B.aBase),nowT=performance.now(),dks=Math.max(2,Math.min(30,+B.aBase.darkSecs||6));
  ["wall","ceil","floor","dark","rock"].filter(k=>rdObOn(B,k==="floor"?"fakefl":k==="rock"?"rocks":k)).forEach(k=>{for(let i=0;i<n;i++)kinds.push(k)});
  kinds.sort(()=>R()-.5).forEach(k=>{
   const len=k==="ceil"?RDOB_CEIL_LEN:k==="floor"?fgp:k==="dark"?6:k==="rock"?RDOB_ROCK_W:RDOB_WALL_W,mx=k==="ceil"?hi-RDOB_CEIL_LEN-20:(k==="floor"||k==="dark"||k==="rock")?hi-60:hi-30,lo=k==="wall"?Math.max(60,hi*0.15,RDOB_WALL_W/2+17+run+10):k==="floor"?Math.max(60,hi*0.12):k==="rock"?Math.max(120,hi*0.12):Math.max(40,hi*0.1);
@@ -1031,7 +1029,8 @@ function rdObStep(B,P,dt){const Pin=P,O=B.obs;if(!O||B.done)return P;
  const now=performance.now(),off=B.off||0,Pp=O.Pp,dP=P-Pp,rdt=Math.max(0.001,(now-(O.tn||now))/1000);O.tn=now;if(dP>1e-6&&dP<B.v0*(B.ts||1)*0.5)B.vr=(B.vr===undefined?B.v0*(B.ts||1)*0.6:B.vr)*0.92+(dP/rdt)*0.08;
  if(Math.abs(dP)>B.v0*dt*1.2+0.5){O.R=0;O.Pp=P;if(B.tg){B.tg.still=0;B.tg.t=now}return P}
  const R0=O.R;let rz=false;
- const sp=dt>0?dP/dt:0,hi=B.ph===3?B.du-38:B.du,vmin=RDOB_FAST*hi/Math.max(0.1,B.a.time/SPD),run=rdObRunPx(hi),boxF=Math.max(B.fb,P+off);
+ const sp=dt>0?dP/dt:0,hi=B.du,vmin=RDOB_FAST*hi/Math.max(0.1,B.a.time/SPD),run=rdObRunPx(hi),boxF=Math.max(B.fb,P+off);
+ P=rdStackLimit(B,P,Pp);
  O.list.forEach(o=>{
   if(o.k==="wall"&&(o.st==="hid"||o.st==="up")){const fbMax=o.x-(RDOB_WALL_W/2+17);
    if(o.st==="hid"&&boxF+17>=o.x-RDOB_SEE){o.st="up";o.t0=now;rdObShake(520);rdFlash("🧱 A wall popped up! It takes 2 fast hits.")}
@@ -1050,7 +1049,7 @@ function rdObStep(B,P,dt){const Pin=P,O=B.obs;if(!O||B.done)return P;
   else if(o.k==="floor"){const cyc=o.cl+RDOB_WARN+o.op,t=((now-o.t0)/1000)%cyc;o.st=t<o.cl?"closed":t<o.cl+RDOB_WARN?"warn":"open";
    if(o.st==="open"&&Math.abs(P+off-(o.x+o.len/2))<260){let fall=false;try{fall=rdObFloorFall(B,o)}catch(e){}
     if(fall){o.t0=now;o.st="closed";rdObShake(300);rdFlash("🕳️ The floor opened under you!");rdLoseHeart(B,"The floor opened under you!")}}}
-  else if(o.k==="rock"){let tip=-1e9;if(o.st==="hid"||o.st==="warn"){try{rdPolys().forEach(p=>p.pts.forEach(q=>{const f=B.sg*(q.x-B.start[0])+(P-Pp);if(f>tip)tip=f}))}catch(e){}}const fe=Math.max(P-23,tip,(B.ph===1||B.ph===3)?B.fb+17:-1e9),hf=RDOB_ROCK_W/2,line=o.x-RDOB_ROCK_LINE,wn=!!(B.aBase||B.a).rockWarn,wl=line-Math.max(60,(B.vr===undefined?B.v0*(B.ts||1)*0.6:B.vr)*0.6);
+  else if(o.k==="rock"){let tip=-1e9;if(o.st==="hid"||o.st==="warn"){try{rdPolys().forEach(p=>p.pts.forEach(q=>{const f=B.sg*(q.x-B.start[0])+(P-Pp);if(f>tip)tip=f}))}catch(e){}}const fe=Math.max(P-23,tip,(B.ph&1)?B.fb+17:-1e9),hf=RDOB_ROCK_W/2,line=o.x-RDOB_ROCK_LINE,wn=!!(B.aBase||B.a).rockWarn,wl=line-Math.max(60,(B.vr===undefined?B.v0*(B.ts||1)*0.6:B.vr)*0.6);
    if(o.st==="hid"&&wn&&fe>=wl&&fe<line){o.st="warn";o.t0=now;rdFlash("⚠️ A block is about to fall!")}
    if((o.st==="warn"||o.st==="hid")&&wn&&fe>=o.x-hf-(20+RDOB_ROCK_EARLY)/CMU&&Math.abs(dP)<1e-6){if(!o.tw)o.tw=now;if(now-o.tw>=RDOB_ROCK_WAIT*1000){o.st="drop";o.t0=now;o.tw=0}}else o.tw=0;
    if((o.st==="hid"||o.st==="warn")&&fe>=line&&fe<o.x+hf+20){o.st="drop";o.t0=now}
@@ -1065,7 +1064,7 @@ function rdObStep(B,P,dt){const Pin=P,O=B.obs;if(!O||B.done)return P;
     else if(now-(O.dkT||0)>150){O.dkT=now;rdObRelight(B)}}}
  });
 
- const tg=B.tg;if(tg){const ph13=B.ph===1||B.ph===3,endX=(B.ph===3?B.du-38:B.du)-14,blk=P!==Pin;
+ const tg=B.tg;if(tg){const ph13=!!(B.ph&1),endX=B.du-rdZone(B)-14,blk=P!==Pin;
   if(ph13&&dP<-1e-6&&!tg.back&&!O.list.some(o=>o.k==="wall"&&o.st==="up"))rdObTg(B,"back");
   if(ph13&&B.fb>1&&B.fb<endX&&(B.bh||0)<2&&!tg.gnd)rdObTg(B,"gnd");
   if(Math.abs(P-Pp)>1e-6)tg.mv=true;
@@ -1110,9 +1109,10 @@ const RDTAGS=[
  {id:"nostop",ic:"🏃",n:"No stopping",k:"r",d:"Once you start moving, never stand still for about a second. Being blocked by a wall is fine."},
  {id:"nohearts",ic:"❤️",n:"No hearts lost",k:"r",d:"Finish the mission without losing a heart."},
  {id:"noback",ic:"➡️",n:"No driving backwards",k:"r",d:"Reach the finish point without driving backwards. Backing up to hit a wall, and the drive back to A, do not count."},
- {id:"stack",ic:"🧱",n:"Stack of three boxes",k:"s",d:"Coming soon."}];
+ {id:"stack",ic:"🧱",n:"Stack of three boxes",k:"r",d:"Stack three boxes on top of each other in one round. It needs a round with at least 3 boxes."},
+ {id:"stack4",ic:"🗼",n:"Stack 4 blocks on each other",k:"r",d:"Stack four boxes on top of each other in one round. It needs a round with 4 or 5 boxes."}];
 /* lifetime achievements: the counter is saved and never resets */
-const RDACH=[{id:"rocks",ic:"📡",n:"Detect 50 rocks",goal:50,d:"Counts every falling rock your ultrasonic sensor detects, in every round."},{id:"stack",ic:"🧱",n:"Stack 100 blocks",goal:100,d:"Counts every box you stack, in every round. It starts counting when boxes can be stacked."}];
+const RDACH=[{id:"rocks",ic:"📡",n:"Detect 50 rocks",goal:50,d:"Counts every falling rock your ultrasonic sensor detects, in every round."},{id:"stack",ic:"🧱",n:"Stack 100 blocks",goal:100,d:"Counts every box you put on top of another box, in every round."}];
 function rdAchGet(k){return((state.ach||{})[k])||0}
 function rdAchAdd(k,n){state.ach=state.ach||{};const a=RDACH.find(q=>q.id===k),before=state.ach[k]||0;state.ach[k]=before+(n||1);save();return !!(a&&before<a.goal&&state.ach[k]>=a.goal)}
 let RDTG_SEL=null,RDEP_I=null,RDEP_OPEN=false;
@@ -1123,7 +1123,7 @@ function rdTagBuild(P,id,count,lim){const h=t=>P.some(o=>o.t===t);
  switch(id){case"pulley":return h("pulley");case"bevel":return h("bevel");case"worm":return h("worm");case"arm":return h("arm");case"rack":return h("rack");
   case"wheel":return h("wheel")&&h("shaft");case"onem":return P.filter(o=>o.t==="motor").length===1;case"light":return lim!==null&&count<=lim}return null}
 function rdTagOK(B,id){const tg=B.tg||{},b=rdTagBuild(rdTagParts(B),id,rdTagCount(B),rdTagLim(B.aBase));if(b!==null)return b;
- switch(id){case"gnd":return !tg.gnd;case"nostop":return !tg.stop;case"nohearts":return B.hearts>=2;case"noback":return !tg.back}return false}
+ switch(id){case"gnd":return !tg.gnd;case"nostop":return !tg.stop;case"nohearts":return B.hearts>=2;case"noback":return !tg.back;case"stack":return(B.maxStk||0)>=3;case"stack4":return(B.maxStk||0)>=4}return false}
 function rdTagKeyA(a){return(a&&a.id)||"a"}
 function rdTagKey(B){return rdTagKeyA(B.aBase)}
 function rdTagGot(B){rdTagsMigrate();return((state.tags||{})[rdTagKey(B)])||{}}
@@ -1132,7 +1132,7 @@ function rdTagChips(got,sel,badFn){let n=0,h="";RDTAGS.forEach(t=>{const g=!!got
 function rdTagInfoBattle(B,id){const t=RDTAGS.find(q=>q.id===id),got=rdTagGot(B);let st="";
  if(t.k==="s")st="🔒 Not available yet.";else if(got[id])st="✅ You earned this tag.";
  else if(t.k==="b")st=rdTagOK(B,id)?"✅ Your machine has it. Finish the mission to earn the tag.":(id==="light"?rdLightTxt(rdTagCount(B),rdTagLim(B.aBase)):"❌ Your machine does not have it yet.");
- else st=B.tg&&!rdTagOK(B,id)?"❌ Not this run. Start again to try.":"👍 Still on track this run.";
+ else if(id==="stack"||id==="stack4")st=rdStackTxt(B,id);else st=B.tg&&!rdTagOK(B,id)?"❌ Not this run. Start again to try.":"👍 Still on track this run.";
  return `<b>${t.ic} ${t.n}</b><br>${t.d}<br><span style="opacity:.9">${st}</span>`}
 function rdTagInfoEntry(a,id){const t=RDTAGS.find(q=>q.id===id),got=((state.tags||{})[rdTagKeyA(a)])||{};let st="";
  if(t.k==="s")st="🔒 Not available yet.";else if(got[id])st="✅ You earned this tag.";
@@ -1140,7 +1140,7 @@ function rdTagInfoEntry(a,id){const t=RDTAGS.find(q=>q.id===id),got=((state.tags
  else if(t.k==="r")st+=(st?"<br>":"")+"You earn this one during a run, when you win.";
  return `<b>${t.ic} ${t.n}</b><br>${t.d}<br><span style="opacity:.9">${st}</span>`}
 /* in the arena: a small Tags button that opens a panel */
-function rdTagsRefresh(){const B=rdBat();if(B&&B.road&&el("rdtp")){const{h,n}=rdTagChips(rdTagGot(B),RDTG_SEL,t=>t.k==="r"&&B.tg&&!rdTagOK(B,t.id));el("rdtg").innerHTML=h;el("rdtn").textContent=n+"/"+RDTAGS.filter(t=>t.k!=="s").length;
+function rdTagsRefresh(){const B=rdBat();if(B&&B.road&&el("rdtp")){const{h,n}=rdTagChips(rdTagGot(B),RDTG_SEL,t=>t.k==="r"&&t.id.indexOf("stack")!==0&&B.tg&&!rdTagOK(B,t.id));el("rdtg").innerHTML=h;el("rdtn").textContent=n+"/"+RDTAGS.filter(t=>t.k!=="s").length;
   const d=el("rdtd");if(RDTG_SEL){d.style.display="block";d.innerHTML=rdTagInfoBattle(B,RDTG_SEL)}else d.style.display="none"}
  rdTagsEntryRender()}
 function rdTagsTap(id){RDTG_SEL=RDTG_SEL===id?null:id;rdTagsRefresh()}
@@ -1176,7 +1176,7 @@ bResult=function(){_bRes45();try{rdTagsFinish(rdBat())}catch(e){}};
 rdDraw=function(){_rdDraw45();try{rdObDraw()}catch(e){}};
 fight=function(ai,pk){_fight45(ai,pk);const B=rdBat();if(!B||!B.road||B.done)return;
  B.aBase=B.a;B.a=Object.assign({},B.aBase);{const rv=rdRng("ev"),pool=["wall","ceil","fakefl","dark","heavy","rocks"].filter(k=>rdObsOn(B.aBase,k)).sort(()=>rv()-.5),lo=Math.min(4,pool.length);B.ev=pool.slice(0,pool.length?lo+Math.floor(rv()*(pool.length-lo+1)):0)}
- B.obs={ph:0,list:[],R:0,Pp:0};B.tg={};RDTG_SEL=null;try{rdTagsInit(B)}catch(e){}
+ {const rn=rdRng("nb"),multi=rdObsOn(B.aBase,"multi");B.needStack=multi;B.nb=multi?2+Math.floor(rn()*4):2}B.stk=[];B.maxStk=0;B.nStacked=0;B.dlv=0;B.obs={ph:0,list:[],R:0,Pp:0};B.tg={};RDTG_SEL=null;try{rdTagsInit(B)}catch(e){}
  if(rdObOn(B,"ceil")&&B.vb0){const mg=Math.max(...rdObGaps(B.aBase)),ext=Math.min(110,Math.max(40,Math.round(PAL+BXH+mg/CMU-47)));B.vb0[1]-=ext;B.vb0[3]+=ext}};
 
 
@@ -1217,7 +1217,7 @@ let RDSEED=1;
 function rdHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function rdRng(tag){let s=(RDSEED^rdHash(String(tag)))>>>0;return function(){s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 /* only three messages show while you play (rock warning, box delivered, tag complete), unless the teacher switches all messages on */
-function rdMsgOK(t){const B=rdBat(),a=B&&(B.aBase||B.a);if(a&&a.showMsgs)return true;return /^(⚠️ A block is about to fall|📦 Delivered|🏷️ Tag complete)/.test(String(t))}
+function rdMsgOK(t){const B=rdBat(),a=B&&(B.aBase||B.a);if(a&&a.showMsgs)return true;return /^(⚠️ A block is about to fall|📦 Delivered|🏷️ Tag complete|🧱 Stack)/.test(String(t))}
 const _rdFlash53=rdFlash;
 rdFlash=function(t){if(rdMsgOK(t))_rdFlash53(t)};
 /* Retry: the same machine, the same arena and the same round, straight away */
@@ -1237,6 +1237,44 @@ function rdTagsMigrate(){if(state.rdTagsV53)return;state.tags={};state.rdTagsV53
 function rdTagsClearSel(){const a=state.arenas[0];if(!a)return;const s=el("rdclr"),v=s&&s.value;state.tags=state.tags||{};const k=rdTagKeyA(a);if(v==="all")state.tags[k]={};else if(state.tags[k])delete state.tags[k][v];save();alert("Cleared.")}
 function rdLightTxt(count,lim){return lim===null?"🔒 Your teacher has not set how many parts are allowed yet.":"❌ Your machine has "+count+" parts. The most allowed is "+lim+"."}
 
+/* ===== 54H: STAGE 7 - 2 TO 5 BOXES, STACKING ===== 
+   A round has 2 to 5 boxes (random; "Several stacked boxes" off = the old 2 boxes). Odd phases carry a box to B,
+   even phases drive back to A. Delivered boxes stand at B in columns; a box can be put on top of a column.
+   To finish: every box must reach B AND at least two boxes must be stacked on each other. */
+const RDBOXH=54; /* one box = pallet legs (20) + box (34) */
+function rdZone(B){return(B.nb||2)>1?38*((B.nb||2)-1)+30:0}
+function rdPartTxt(B){const nb=B.nb||2,bi=((B.ph-1)>>1)+1;return((B.ph&1)?"Box "+bi+" of "+nb+": carry it to B":"Drive back to A for box "+(bi+1))+((B.maxStk||0)>=2?"  ·  🧱 stack of "+B.maxStk:"")}
+function rdNeedStack(B){return(B.needStack&&(B.maxStk||0)<2)?" You needed a stack of at least 2 boxes.":""}
+function rdStackTxt(B,id){const need=id==="stack4"?4:3,m=B.maxStk||0;return(B.nb||2)<need?"❌ This round has only "+(B.nb||2)+" boxes. You need a round with "+need+" or more.":(m>=need?"✅ You stacked "+m+" boxes.":"👍 Your tallest stack so far: "+m+" of "+need+".")}
+/* every delivered box, and the box you are carrying */
+function rdBoxes(B,X,Y){let h="";(B.stk||[]).forEach(c=>{for(let k=0;k<c.n;k++)h+=rdBox(X(c.x),Y,c.ms[k],RDBOXH*k)});if((B.ph&1)&&!B.done)h+=rdBox(X(B.fb),Y,B.a.mass,B.bh);return h}
+/* a box on the ground cannot go through a column; a lifted box can go over it */
+function rdStackLimit(B,P,Pp){if(!(B.ph&1)||!B.stk||!B.stk.length||B.noTip===undefined)return P;const off=B.off||0,bh=B.bh||0;let lim=1e9;
+ B.stk.forEach(c=>{if(c.x>=B.fb-1&&bh<RDBOXH*c.n-2)lim=Math.min(lim,c.x-34)});if(lim>=1e9)return P;
+ if(B.grip||B.hook)return(B.fb>=lim-0.5&&P>Pp)?Pp:P;return Math.min(P,lim-off)}
+function rdStackKeep(B){(B.stk||[]).forEach(c=>{const dx=B.fb-c.x;if((B.bh||0)<RDBOXH*c.n-2&&Math.abs(dx)<34)B.fb=c.x+(dx<0?-34:34)})}
+/* after the box has fallen: it lands on top of a column instead of going to the ground */
+function rdStackLand(B){if(!(B.ph&1)||B.done||!B.stk||B.hook||B.grip)return;B.stk.forEach(c=>{if(Math.abs(B.fb-c.x)<=26&&(B.bh||0)<RDBOXH*c.n)B.bh=RDBOXH*c.n})}
+const _rdBoxStep54=rdBoxStep;
+rdBoxStep=function(B,dt){_rdBoxStep54(B,dt);try{if(B&&B.road)rdStackLand(B)}catch(e){}};
+function rdSettled(B){const bh=B.bh||0,still=Math.abs(B.fb-(B.fbp===undefined?B.fb:B.fbp))<0.05&&Math.abs(bh-(B.bhp===undefined?bh:B.bhp))<0.05;B.fbp=B.fb;B.bhp=bh;return still&&!B.hook&&!B.grip&&!B.sup&&B.noTip!==undefined}
+/* delivery, drive back, next box, and winning */
+function rdBoxFlow(B,P,pay,r){const du=B.du,nb=B.nb||2;if(!B.stk)B.stk=[];
+ if(B.ph&1){rdStackKeep(B);
+  if(!rdSettled(B)){B.rst=0;return}
+  const now=performance.now();if(!B.rst){B.rst=now;return}if(now-B.rst<350)return;
+  const zs=du-38*(nb-1)-12,col=B.stk.find(c=>Math.abs(B.fb-c.x)<=26&&Math.abs((B.bh||0)-RDBOXH*c.n)<3),ground=(B.bh||0)<3;
+  if(!col&&!(ground&&B.fb>=zs))return;
+  const last=(B.ph===2*nb-1);
+  if(last&&B.needStack&&!col&&(B.maxStk||0)<2){if(!B.sh||now-B.sh>2500){B.sh=now;rdFlash("🧱 Stack this box on top of another box to finish.")}return}
+  const m=B.a.mass;
+  if(col){col.n++;col.ms.push(m);B.nStacked=(B.nStacked||0)+1;try{if(rdAchAdd("stack",1)){rdFlash("🏷️ Tag complete: 🧱 Stack 100 blocks");rdTagsRefresh()}}catch(e){}}
+  else B.stk.push({x:Math.min(B.fb,du),n:1,ms:[m]});
+  B.maxStk=Math.max.apply(null,B.stk.map(c=>c.n));B.dlv=(B.dlv||0)+1;pay();
+  if(last){B.done=true;r.win=true;r.msg="";B.rdwin=true;return}
+  B.ph++;B.cpx=du;B.bh=0;B.sup=null;B.hook=null;B.grip=null;B.rst=0;rdFlash("📦 Delivered! Go back to A and pick up the next box.")}
+ else if(P<=0.5){pay();B.ph++;B.cpx=0;B.fb=0;B.bh=0;B.sup=null;B.hook=null;B.grip=null;B.rst=0;B.fbp=undefined;B.bhp=undefined}}
+
 (function(){const s=document.createElement("div");s.id="sside";s.innerHTML="<i></i>";document.body.appendChild(s);const t=s.firstChild,de=()=>document.scrollingElement||document.documentElement;
 const room=()=>s.clientHeight-t.offsetHeight,max=()=>Math.max(1,de().scrollHeight-innerHeight);
 function place(){t.style.top=Math.max(0,Math.min(room(),de().scrollTop/max()*room()))+"px"}
@@ -1247,7 +1285,7 @@ const up=()=>{s._d=0;s.classList.remove("on")};s.addEventListener("pointerup",up
 addEventListener("scroll",place,{passive:true});
 setInterval(()=>{const on=!!document.getElementById("sv");s.style.display=on?"block":"none";if(on)place();const sv0=document.getElementById("sv");if(sv0)sv0.classList.toggle("mechsv",typeof sim==="object"&&!!sim&&!!sim.p&&sim.p.type==="m")},400)})();
 
-const CDT=0.05,RQAPPV="53H";
+const CDT=0.05,RQAPPV="54H";
 function motorStrip(mo){const run=mo&&Math.abs(mo.v)>=0.5&&sim.run,st='<rect x="-14" y="-10.5" width="28" height="5" rx="2.5" fill="#f1f5f9" stroke="#0f172a" stroke-width="1"/>';if(!run)return st;const rps=Math.min(2.5,mo.rpm/100),dur=1/Math.max(0.1,rps),ph=-((performance.now()/1000)%dur);return `<g><animateTransform attributeName="transform" type="rotate" from="0 0 -8" to="${mo.v>=0?360:-360} 0 -8" dur="${dur.toFixed(2)}s" begin="${ph.toFixed(2)}s" repeatCount="indefinite"/>${st}</g>`}
 setInterval(()=>{try{if(!sim||!sim.run||!sim.p||sim.p.type==="m"||!sim.p.parts.some(o=>o.t==="cap"))return;sim.cv=sim.cv||{};solveSim();const r=sim.res;if(!r||!r.c)return;for(const id in r.c)if(!r.c[id].burnt)sim.cv[id]=r.c[id].v;drawSim(true)}catch(e){}},50);
 (function(){const d=document.createElement("div");d.textContent="Version "+RQAPPV;d.style.cssText="position:fixed;left:6px;bottom:2px;font-size:10px;opacity:.5;z-index:5;pointer-events:none";document.body.appendChild(d)})();
