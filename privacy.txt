@@ -1,0 +1,34 @@
+## RoboQuest Privacy Policy
+Last updated: 30 October 2026
+
+## 1. What we collect
+- The student's name or nickname.
+- An email address. This can be a parent's or guardian's email.
+- What you build and earn in the app: projects, points, tags and progress.
+
+We collect nothing else.
+
+## 2. Why we collect it
+- To sign you in.
+- To keep your work and progress safe, so it is there when you come back.
+- To let teachers see who is in their class and how they are doing.
+
+We do not sell your information. We do not use it for adverts.
+
+## 3. Where it is kept and who can see it
+- It is stored with Firebase, a service from Google.
+- Teachers and the app owner can see student names and progress.
+- No one else can see it.
+
+## 4. Who can use the app
+RoboQuest is for everyone, children and adults. Young children should use it with a parent's or guardian's permission.
+
+## 5. Payments and your account
+- Some access may need a payment. If a payment is not made, the account may be deactivated.
+- A deactivated account is not erased. Your information stays, and the account can be reactivated when the payment is made.
+
+## 6. Deleting your account
+You can ask for your account and information to be deleted at any time. Ask your teacher or the app owner, and it will be deleted.
+
+## 7. Changes
+This policy may change, for example when payments are added. The newest version is always the one shown in the app.

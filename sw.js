@@ -1,6 +1,6 @@
-const VER="37",CACHE="roboquest-v109",MEDIA="roboquest-media";
+const VER="AFT 2.0",CACHE="roboquest-v110",MEDIA="roboquest-media";
 const VIDEO="Video.Guru_20261004_044522845.mp4";
-const SHELL=["./","index.html","icons.js?v=37","firebase-config.js?v=37","cloud.js?v=37","manifest.json"];
+const SHELL=["./","index.html","icons.js?v=37","firebase-config.js?v=37","cloud.js?v=37","manifest.json","privacy.txt"];
 self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.open(CACHE);
   await Promise.all(SHELL.map(async u=>{try{const r=await fetch(new Request(u,{cache:"reload"}));if(r.ok)await c.put(new Request(u),r)}catch(x){if(u==="index.html"||u==="./")throw x}}));
   try{const m=await caches.open(MEDIA);if(!(await m.match(VIDEO)))await m.add(VIDEO)}catch(x){}})())});
@@ -23,6 +23,7 @@ self.addEventListener("fetch",e=>{
   const u=new URL(e.request.url);
   if(u.pathname.endsWith(".mp4")){e.respondWith(serveVideo(e.request));return}
   if(/\.(png|jpe?g|webp|gif|svg)$/i.test(u.pathname)){e.respondWith(caches.open(MEDIA).then(async c=>{const hit=await c.match(e.request);const net=fetch(e.request).then(r=>{if(r.ok)c.put(e.request,r.clone());return r}).catch(()=>hit);return hit||net}));return}
+  if(u.origin===location.origin&&u.pathname.endsWith("privacy.txt")){e.respondWith((async()=>{const c=await caches.open(CACHE);try{const n=await fetch(e.request,{cache:"no-store"});if(n.ok){c.put("privacy.txt",n.clone());return n}}catch(x){}const h=await c.match("privacy.txt");return h||new Response("",{status:404})})());return}
   if(u.origin===location.origin){e.respondWith((async()=>{const c=await caches.open(CACHE);let r=await c.match(e.request);if(r)return r;
     if(e.request.mode==="navigate"){r=(await c.match("index.html"))||(await c.match("./"));if(r)return r}
     try{const n=await fetch(e.request);if(n.ok)c.put(e.request,n.clone());return n}catch(x){const any=await caches.match(e.request,{ignoreSearch:true});if(any)return any;throw x}})());return}
