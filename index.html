@@ -2,6 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+(function(){
+var miss=[];
+function t(n,f){try{if(!f())miss.push(n)}catch(e){miss.push(n)}}
+t("flat",function(){return typeof Array.prototype.flat==="function"});
+t("fromEntries",function(){return typeof Object.fromEntries==="function"});
+t("entries",function(){return typeof Object.entries==="function"});
+t("padStart",function(){return typeof String.prototype.padStart==="function"});
+t("Promise",function(){return typeof Promise==="function"});
+t("fetch",function(){return typeof fetch==="function"});
+t("storage",function(){return !!window.localStorage&&!!window.indexedDB});
+t("syntax",function(){new Function("var f=async function(){await 1};var o={a:1};var q={...o};return `x${q.a}`");return true});
+if(!miss.length)return;
+window.RQ_OLD=true;
+var d=document.createElement("div");
+d.style.cssText="position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483647;background:#0f172a;color:#fff;padding:28px;font-family:Arial,sans-serif;text-align:center;overflow:auto";
+d.innerHTML='<div style="margin-top:12vh;font-size:56px">&#129302;</div><h2 style="margin:16px 0 8px">Your phone\'s browser is too old</h2><p style="font-size:17px;line-height:1.5;margin:0 0 22px">RoboQuest needs a newer browser. Please update <b>Google Chrome</b> in the Play Store, then open the app again.</p><button onclick="location.reload()" style="font-size:18px;padding:14px 28px;border:0;border-radius:12px;background:#84cc16;color:#1a2e05;font-weight:700">Try again</button><p style="opacity:.5;font-size:12px;margin-top:26px">Code: '+miss.join(", ")+'</p>';
+(document.body||document.documentElement).appendChild(d);
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>RoboQuest</title>
 <link rel="manifest" href="manifest.json">
@@ -130,7 +150,7 @@ body.ls .rotmsg{display:none}}
 </div>
 <script>try{if(sessionStorage.getItem("rq_sp")){var s=document.getElementById("splash");if(s)s.remove()}else sessionStorage.setItem("rq_sp","1")}catch(e){}</script>
 <script>document.addEventListener("contextmenu",function(e){if(!e.target.closest||!e.target.closest("input,textarea"))e.preventDefault()},true);document.addEventListener("dragstart",function(e){e.preventDefault()},true)</script>
-<script>window.addEventListener("error",function(e){var d=document.getElementById("errbar");if(!d){d=document.createElement("div");d.id="errbar";d.style.cssText="position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;padding:10px;border-radius:12px;font:13px sans-serif;white-space:pre-wrap;max-height:40vh;overflow:auto";d.onclick=function(){d.remove()};document.body.appendChild(d)}var t=d.textContent.replace(/ - tap to close$/,"");if(t.split("\n").length<4)d.textContent=(t?t+"\n":"")+"⚠️ "+e.message+" (line "+e.lineno+")";d.textContent+=" - tap to close"});
+<script>window.addEventListener("error",function(e){if(window.RQ_OLD)return;var d=document.getElementById("errbar");if(!d){d=document.createElement("div");d.id="errbar";d.style.cssText="position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;padding:10px;border-radius:12px;font:13px sans-serif;white-space:pre-wrap;max-height:40vh;overflow:auto";d.onclick=function(){d.remove()};document.body.appendChild(d)}var t=d.textContent.replace(/ - tap to close$/,"");if(t.split("\n").length<4)d.textContent=(t?t+"\n":"")+"⚠️ "+e.message+" (line "+e.lineno+")";d.textContent+=" - tap to close"});
 const BT={btn:"bt-battlebtn.jpg",bandana:"bt-bandana.jpg",banner:"bt-banner.jpg",win:"bt-win.jpg",lose:"bt-lose.jpg",box:"bt-box.jpg"};
 
 let KEY="roboquest_v1";
@@ -233,10 +253,10 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v108";
+const RQCACHE="roboquest-v109";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
-try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=36").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
+try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=37").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
 
 
 let tLevel=0;
@@ -1374,5 +1394,5 @@ SIMPIC.pot='<svg width="48" height="32" viewBox="0 0 48 32">'+potPiece(24,15,60)
 SIMPIC.bbl='<svg width="48" height="32" viewBox="0 0 48 32"><rect x="2" y="3" width="44" height="26" rx="3" fill="#f8fafc" stroke="#94a3b8"/><rect x="5" y="5.2" width="38" height="2" rx="1" fill="#ef4444"/><rect x="5" y="24.8" width="38" height="2" rx="1" fill="#3b82f6"/>'+[11,14.5,18,21.5].map(y=>Array.from({length:14},(_,k)=>6.4+k*2.7).map(x=>'<circle cx="'+x+'" cy="'+y+'" r="0.8" fill="#475569"/>').join("")).join("")+'<rect x="5" y="16.2" width="38" height="0.8" fill="#cbd5e1"/></svg>';
 SIMPIC.bbw=SIMPIC.bbl;
 </script>
-<script src="icons.js?v=36"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=36"></script><script src="cloud.js?v=36"></script></body>
+<script src="icons.js?v=37"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=37"></script><script src="cloud.js?v=37"></script></body>
 </html>
