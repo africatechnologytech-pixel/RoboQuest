@@ -253,7 +253,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v113";
+const RQCACHE="roboquest-v114";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=37").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -1287,12 +1287,12 @@ function rdStackTxt(B,id){const need=id==="stack4"?4:3,m=B.maxStk||0;return(B.nb
 function rdBoxes(B,X,Y){let h="";(B.stk||[]).forEach(c=>{for(let k=0;k<c.n;k++)h+=rdBox(X(c.x),Y,c.ms[k],RDBOXH*k)});if((B.ph&1)&&!B.done)h+=rdBox(X(B.fb),Y,B.a.mass,B.bh);return h}
 /* a box on the ground cannot go through a column; a lifted box can go over it */
 function rdStackLimit(B,P,Pp){if(!(B.ph&1)||!B.stk||!B.stk.length||B.noTip===undefined)return P;const off=B.off||0,bh=B.bh||0;let lim=1e9;
- B.stk.forEach(c=>{if(c.x>=B.fb-1&&bh<RDBOXH*c.n-2)lim=Math.min(lim,c.x-34)});if(lim>=1e9)return P;
+ B.stk.forEach(c=>{const top=RDBOXH*c.n;if(c.x>=B.fb-1&&bh<top-RDPASS&&!(B.abv===c&&Math.abs(B.fb-c.x)<RDSNAP))lim=Math.min(lim,c.x-34)});if(lim>=1e9)return P;
  if(B.grip||B.hook)return(B.fb>=lim-0.5&&P>Pp)?Pp:P;return Math.min(P,lim-off)}
-const RDSNAP=50;
-function rdStackKeep(B){if(!(B.hook||B.grip||B.sup))return;(B.stk||[]).forEach(c=>{const dx=B.fb-c.x,d=Math.abs(dx),top=RDBOXH*c.n,bh=B.bh||0;if(bh>=top-2)return;if(B.sup&&!B.hook&&!B.grip&&B.lbh!==undefined&&B.lbh>=top-6&&d<RDSNAP){B.fb=c.x;B.bh=top;B.lbh=top;B.sup=null;return}if(d<34)B.fb=c.x+(dx<0?-34:34)})}
+const RDSNAP=50,RDPASS=16;
+function rdStackKeep(B){if(!(B.hook||B.grip||B.sup))return;(B.stk||[]).forEach(c=>{const dx=B.fb-c.x,d=Math.abs(dx),top=RDBOXH*c.n,bh=B.bh||0;if(bh>=top-RDPASS)return;if(B.sup&&!B.hook&&!B.grip&&B.abv===c&&d<RDSNAP){B.fb=c.x;B.bh=top;B.lbh=top;B.sup=null;return}if(d<34)B.fb=c.x+(dx<0?-34:34)})}
 /* after the box has fallen: it lands on top of a column instead of going to the ground */
-function rdStackLand(B){if(!(B.ph&1)||B.done||!B.stk)return;const bh=B.bh||0,pb=B.lbh===undefined?bh:B.lbh;B.lbh=bh;if(B.hook||B.grip||B.sup)return;let best=null,side=null;B.stk.forEach(c=>{const top=RDBOXH*c.n,dx=B.fb-c.x,d=Math.abs(dx);if(d>=RDSNAP)return;if(Math.max(bh,pb)>=top-6){if(bh<top+RDBOXH*0.5&&(!best||d<best.d))best={c,d}}else if(d<34)side={c,dx}});if(best){B.fb=best.c.x;if(bh<RDBOXH*best.c.n)B.bh=RDBOXH*best.c.n;B.lbh=B.bh}else if(side){B.fb=side.c.x+(side.dx<0?-34:34)}}
+function rdStackLand(B){if(!(B.ph&1)||B.done||!B.stk)return;const bh=B.bh||0,pb=B.lbh===undefined?bh:B.lbh;B.lbh=bh;B.stk.forEach(c=>{const top=RDBOXH*c.n,d=Math.abs(B.fb-c.x);if(d>=RDSNAP){if(B.abv===c)B.abv=null}else if(bh>=top-RDPASS)B.abv=c});if(B.hook||B.grip||B.sup)return;let best=null,side=null;B.stk.forEach(c=>{const top=RDBOXH*c.n,dx=B.fb-c.x,d=Math.abs(dx);if(d>=RDSNAP)return;if(Math.max(bh,pb)>=top-RDPASS||B.abv===c){if(bh<top+RDBOXH*0.5&&(!best||d<best.d))best={c,d}}else if(d<34)side={c,dx}});if(best){B.fb=best.c.x;if(bh<RDBOXH*best.c.n)B.bh=RDBOXH*best.c.n;B.lbh=B.bh}else if(side){B.fb=side.c.x+(side.dx<0?-34:34)}}
 const _rdBoxStep54=rdBoxStep;
 rdBoxStep=function(B,dt){_rdBoxStep54(B,dt);try{if(B&&B.road)rdStackLand(B)}catch(e){}};
 function rdSettled(B){const bh=B.bh||0,still=Math.abs(B.fb-(B.fbp===undefined?B.fb:B.fbp))<0.05&&Math.abs(bh-(B.bhp===undefined?bh:B.bhp))<0.05;B.fbp=B.fb;B.bhp=bh;return still&&!B.hook&&!B.grip&&!B.sup&&B.noTip!==undefined}
@@ -1301,8 +1301,8 @@ function rdBoxFlow(B,P,pay,r){const du=B.du,nb=B.nb||2;if(!B.stk)B.stk=[];
  if(B.ph&1){rdStackKeep(B);
   if(!rdSettled(B)){B.rst=0;return}
   const now=performance.now();if(!B.rst){B.rst=now;return}if(now-B.rst<350)return;
-  const zs=du-38*(nb-1)-12,col=B.stk.find(c=>Math.abs(B.fb-c.x)<=26&&Math.abs((B.bh||0)-RDBOXH*c.n)<3),ground=(B.bh||0)<3;
-  if(!col&&!(ground&&B.fb>=zs))return;
+  const sx=du-38*B.stk.length,col=B.stk.find(c=>Math.abs(B.fb-c.x)<=26&&Math.abs((B.bh||0)-RDBOXH*c.n)<3),ground=(B.bh||0)<3;
+  if(!col){if(!(ground&&Math.abs(B.fb-sx)<=26)){if(ground&&(!B.sh2||now-B.sh2>3000)){B.sh2=now;rdFlash("📦 Put this box in the next space"+(B.stk.length?" beside the last box":" at the flag")+", or on top of another box.")}return}B.fb=sx}
   const last=(B.ph===2*nb-1);
   if(last&&B.needStack&&!col&&(B.maxStk||0)<2){if(!B.sh||now-B.sh>2500){B.sh=now;rdFlash("🧱 Stack this box on top of another box to finish.")}return}
   const m=B.a.mass;
