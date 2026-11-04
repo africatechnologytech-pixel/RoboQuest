@@ -1,8 +1,8 @@
-const VER="AFT 2.2",CACHE="roboquest-v130",MEDIA="roboquest-media";
+const VER="AFT 2.3",CACHE="roboquest-v131",MEDIA="roboquest-media";
 const VIDEO="Video.Guru_20261004_044522845.mp4";
-const SHELL=["./","index.html","icons.js?v=37","firebase-config.js?v=37","cloud.js?v=42","manifest.json","privacy.txt"];
+const SHELL=["./","index.html","icons.js?v=37","firebase-config.js?v=37","cloud.js?v=43","manifest.json","privacy.txt"];
 self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.open(CACHE);
-  await Promise.all(SHELL.map(async u=>{try{const r=await fetch(new Request(u,{cache:"reload"}));if(r.ok)await c.put(new Request(u),r)}catch(x){if(u==="index.html"||u==="./")throw x}}));
+  await Promise.all(SHELL.map(async u=>{try{const r=await fetch(new Request(u+(u.indexOf("?")<0?"?":"&")+"cb="+CACHE,{cache:"reload"}));if(r.ok)await c.put(new Request(u),r)}catch(x){if(u==="index.html"||u==="./")throw x}}));
   try{const m=await caches.open(MEDIA);if(!(await m.match(VIDEO)))await m.add(VIDEO)}catch(x){}})())});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.indexOf("roboquest-v")===0&&x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener("message",e=>{if(e.data==="skip")self.skipWaiting();if(e.data==="ver"&&e.ports&&e.ports[0])e.ports[0].postMessage({c:CACHE,v:VER})});
