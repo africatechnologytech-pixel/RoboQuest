@@ -174,7 +174,7 @@ const defaults={
  arenas:[{id:"a1",name:"The Heavy Box Arena",story:"A heavy box is stuck at point A. Build a machine that can push it to point B before time runs out!",mass:2,dist:4,time:6,fric:0.3}],
  quizzes:[{q:"Which one is an electronic component?",a:["Gear","Battery","Wheel","Lever"],correct:1}]
 };
-let state=load();
+let state=load();state.rankImgs=Array.from({length:5},()=>["","","",""]);
 const ranks=["Robo Rookie","Robo Junior Inventor","Robo Builder","Robo Master"];
 const cats=["Power","Input","Control","Output","Support"];
 const icons={Power:"🔋",Input:"🔘",Control:"🧠",Output:"⚙️",Support:"〰️"};
@@ -187,8 +187,9 @@ function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(!x)return c
 function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function lname(l){return `Level ${l+1}`}
 function rname(l,r){const n=state.rankNames&&state.rankNames[l]&&state.rankNames[l][r];return (n&&n.trim())||ranks[r]}
-function rthumb(l,r,px){const u=state.rankImgs&&state.rankImgs[l]&&state.rankImgs[l][r];return `<div class="lthumb"${u?` onclick="zoomRank(${l},${r})" style="cursor:zoom-in${px?`;width:${px}px;height:${px}px;font-size:${Math.round(px/2)}px`:""}"`:px?` style="width:${px}px;height:${px}px;font-size:${Math.round(px/2)}px"`:""}>${u?`<img src="${u}" alt="">`:"🏅"}</div>`}
-function zoomRank(l,r){const u=state.rankImgs[l][r];if(!u)return;const d=document.createElement("div");d.id="pop";d.onclick=()=>d.remove();d.innerHTML=`<div class="zoomwrap"><img src="${u}" alt=""><div>${esc(lname(l))} · ${esc(rname(l,r))}</div><small>Tap anywhere to close</small></div>`;document.body.appendChild(d)}
+function rkUrl(l,r){return "rank-"+(l+1)+"-"+(r+1)+".jpg"}
+function rthumb(l,r,px){const u=rkUrl(l,r);return `<div class="lthumb"${u?` onclick="zoomRank(${l},${r})" style="cursor:zoom-in${px?`;width:${px}px;height:${px}px;font-size:${Math.round(px/2)}px`:""}"`:px?` style="width:${px}px;height:${px}px;font-size:${Math.round(px/2)}px"`:""}>${u?`<img src="${u}" alt="" onerror="this.parentNode.textContent='🏅'">`:"🏅"}</div>`}
+function zoomRank(l,r){const u=rkUrl(l,r);const d=document.createElement("div");d.id="pop";d.onclick=()=>d.remove();d.innerHTML=`<div class="zoomwrap"><img src="${u}" alt=""><div>${esc(lname(l))} · ${esc(rname(l,r))}</div><small>Tap anywhere to close</small></div>`;document.body.appendChild(d)}
 function levelDone(l){return state.stars[l].flat().every(Boolean)}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){alert("Could not save. Storage may be full.")}}
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open("roboquest_media",1);r.onupgradeneeded=()=>r.result.createObjectStore("files");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -219,7 +220,7 @@ function about(){el("screen").innerHTML=nav()+`${hero('car','📖 About RoboQues
 let tSec=null,addQW="e";
 function openTeacher(){tSec=null;ed=null;teacher()}
 function openSec(k){tSec=k;ed=null;if(k==="addE"&&draft.w!=="e")draft={w:"e",name:"",cat:cats[0],pages:[]};if(k==="addM"&&draft.w!=="m")draft={w:"m",name:"",cat:MCATS[0],pages:[]};if(k==="quizE")addQW="e";if(k==="quizM")addQW="m";teacher();window.scrollTo(0,0)}
-function ranksCard(){return `<div class="card"><h3>Rank names and pictures</h3><select id="tl" onchange="changeTLevel(this.value)">${[0,1,2,3,4].map(i=>`<option value="${i}"${i===tLevel?" selected":""}>Level ${i+1}</option>`).join("")}</select>${[0,1,2,3].map(r=>`<div class="lrow">${rthumb(tLevel,r)}<div style="flex:1;min-width:0"><input type="text" id="rn${r}" value="${esc(rname(tLevel,r))}" placeholder="Rank ${r+1} name"><label class="filebtn">${state.rankImgs[tLevel][r]?"Change picture":"Choose picture"}<input type="file" accept="image/*" onchange="setRankImg(${r},this)"></label>${state.rankImgs[tLevel][r]?`<button onclick="clearRankImg(${r})">Remove</button>`:""}</div></div>`).join("")}<button class="primary" onclick="saveRanks()">Save rank names</button><button onclick="rqDlRanks()" style="margin-top:8px">⬇️ Download all rank pictures</button></div>`}
+function ranksCard(){return `<div class="card"><h3>Rank names and pictures</h3><select id="tl" onchange="changeTLevel(this.value)">${[0,1,2,3,4].map(i=>`<option value="${i}"${i===tLevel?" selected":""}>Level ${i+1}</option>`).join("")}</select>${[0,1,2,3].map(r=>`<div class="lrow">${rthumb(tLevel,r)}<div style="flex:1;min-width:0"><input type="text" id="rn${r}" value="${esc(rname(tLevel,r))}" placeholder="Rank ${r+1} name"></div></div>`).join("")}<button class="primary" onclick="saveRanks()">Save rank names</button></div>`}
 /* saves every rank picture (all levels) into one zip file: rank-<level>-<rank>.jpg */
 function rqDlRanks(){try{const files=[];(state.rankImgs||[]).forEach((L,l)=>(L||[]).forEach((d,r)=>{if(d&&d.indexOf("data:image")===0){const b=atob(d.split(",")[1]),u=new Uint8Array(b.length);for(let k=0;k<b.length;k++)u[k]=b.charCodeAt(k);files.push({n:"rank-"+(l+1)+"-"+(r+1)+".jpg",d:u})}}));
  if(!files.length){alert("No rank pictures found on this phone.");return}
@@ -263,7 +264,7 @@ function quiz(w="e"){qw=w;const Q=state[WORLD[w].qk];if(!Q.length){el("screen").
 function answer(i){const q=state[WORLD[qw].qk][qi];state.qpos=state.qpos||{e:0,m:0};state.qpos[qw]=(qi+1)%state[WORLD[qw].qk].length;const ok=i===q.correct;state.stats.answered++;if(ok)state.stats.correct++;save();el("screen").innerHTML=nav()+`${hero(ok?'thumbs':'fire',ok?'✅ Correct!':'❌ Not quite',ok?'Great job, inventor!':'Check the answer and try again.',ok?'#dff5d0':'#fde2e2')}<div class="card">${ok?"":`<p>Correct answer: ${esc(q.a[q.correct])}</p>`}<button class="primary" onclick="quiz(qw)">Next question</button></div>`}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v141";
+const RQCACHE="roboquest-v142";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=37").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -1480,5 +1481,5 @@ about=function(){el("screen").innerHTML=nav()+hero('car','📖 About RoboQuest',
  <div class="card"><h3>Credits</h3><p>Created by Afro Technology, with the assistance of AI.</p><p>Built with Firebase and Google services.</p><p style="opacity:.7;font-size:13px">Version ${RQAPPV}<br>© 2026 Afro Technology. All rights reserved.</p></div>`};
 })();
 </script>
-<script src="icons.js?v=37"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=37"></script><script src="cloud.js?v=48"></script></body>
+<script src="icons.js?v=37"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=37"></script><script src="cloud.js?v=49"></script></body>
 </html>
