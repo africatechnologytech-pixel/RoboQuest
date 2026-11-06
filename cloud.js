@@ -152,7 +152,14 @@ async function applyContent(){const docs={};for(const q of[db.collection("conten
  try{const cq=await db.collection("catalog").get(),have={};state.arenas.forEach(a=>{if(a.id)have["arena_"+a.id]=1});cq.forEach(d=>{const v=d.data();if(v.kind==="arena"&&!have[d.id])state.arenas.push({id:v.id,name:v.name||"Arena",story:"",mass:0,dist:0,time:0,locked:true})})}catch(x){prevA.forEach(a=>{if(!state.arenas.some(b=>b.id===a.id))state.arenas.push({id:a.id,name:a.name||"Arena",story:"",mass:0,dist:0,time:0,locked:true})})}
  for(const w in QQ)state[qkey(w)]=QQ[w].sort((a,b)=>a.o-b.o).map(z=>z.q);state.qpos=state.qpos||{e:0,m:0};["e","m"].forEach(w=>{if((state.qpos[w]||0)>=state[qkey(w)].length)state.qpos[w]=0});
  const ud=await U(me.uid).get();prof=ud.data()||prof;try{localStorage["rq_seenL_"+me.uid]=Math.max(+localStorage["rq_seenL_"+me.uid]||0,(prof&&prof.newL)||0);window.rqNewL=false;rqDotPaint()}catch(x){}state.stars=starsOf(prof);rqLearned();award=()=>{};localStorage.rq_sync=Date.now();save()}
-window.rqRefresh=()=>applyContent().then(()=>{try{home()}catch(x){}}).catch(()=>alert("Could not get lessons. Check your internet."));
+window.rqRefresh=()=>{if(window.__rqLoad)return;window.__rqLoad=1;
+ if(!document.getElementById("rqspinst")){const st=document.createElement("style");st.id="rqspinst";st.textContent="@keyframes rqspin{to{transform:rotate(360deg)}}";document.head.appendChild(st)}
+ const ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center";
+ const say=(ic,t)=>{ov.innerHTML=`<div style="background:#fff;color:#17324d;border-radius:18px;padding:22px 28px;text-align:center;font:700 18px system-ui,sans-serif;min-width:200px">${ic}<div style="margin-top:10px">${t}</div></div>`};
+ const SP='<div style="width:44px;height:44px;margin:0 auto;border:5px solid #dbe4ee;border-top-color:#16a34a;border-radius:50%;animation:rqspin .8s linear infinite"></div>';
+ say(SP,"Loading lessons…");document.body.appendChild(ov);
+ const end=()=>{window.__rqLoad=0;ov.remove()};
+ applyContent().then(()=>{say('<div style="font-size:44px">✅</div>',"Done");setTimeout(()=>{end();try{home()}catch(x){}},900)}).catch(()=>{say('<div style="font-size:44px">⚠️</div>',"Could not get lessons.<br>Check your internet.");setTimeout(end,2200)})};
 /* ---- Part B: open a student's progress, per-student unlocks, locked stars ---- */
 let VIEW=null;
 const starsOf=v=>{try{return v.stars?JSON.parse(v.stars):JSON.parse(JSON.stringify(defaults.stars))}catch(x){return JSON.parse(JSON.stringify(defaults.stars))}};
