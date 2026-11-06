@@ -1,6 +1,6 @@
-const VER="AFT 2.0",CACHE="roboquest-v142",MEDIA="roboquest-media";
+const VER="AFT 2.0",CACHE="roboquest-v143",MEDIA="roboquest-media";
 const VIDEO="Video.Guru_20261004_044522845.mp4";
-const SHELL=["./","index.html","icons.js?v=37","firebase-config.js?v=37","cloud.js?v=49","manifest.json","privacy.txt"];
+const SHELL=["./","index.html","icons.js?v=37","firebase-config.js?v=37","cloud.js?v=50","manifest.json","privacy.txt"];
 self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.open(CACHE);
   await Promise.all(SHELL.map(async u=>{try{const r=await fetch(new Request(u+(u.indexOf("?")<0?"?":"&")+"cb="+CACHE,{cache:"reload"}));if(r.ok)await c.put(new Request(u),r)}catch(x){if(u==="index.html"||u==="./")throw x}}));
   try{const m=await caches.open(MEDIA);if(!(await m.match(VIDEO)))await m.add(VIDEO)}catch(x){}})())});
