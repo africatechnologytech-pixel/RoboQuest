@@ -162,7 +162,7 @@ async function applyContent(){const pf=(await U(me.uid).get()).data()||{};let C=
  try{const cq=await db.collection("catalog").get(),have={};state.arenas.forEach(a=>{if(a.id)have["arena_"+a.id]=1});cq.forEach(d=>{const v=d.data();if(v.kind==="arena"&&!have[d.id])state.arenas.push({id:v.id,name:v.name||"Arena",story:"",mass:0,dist:0,time:0,locked:true})})}catch(x){prevA.forEach(a=>{if(!state.arenas.some(b=>b.id===a.id))state.arenas.push({id:a.id,name:a.name||"Arena",story:"",mass:0,dist:0,time:0,locked:true})})}
  for(const w in QQ)state[qkey(w)]=QQ[w].sort((a,b)=>a.o-b.o).map(z=>z.q);state.qpos=state.qpos||{e:0,m:0};["e","m"].forEach(w=>{if((state.qpos[w]||0)>=state[qkey(w)].length)state.qpos[w]=0});
  {const cd={};for(const id in docs)cd[id]=Object.assign({},docs[id],{pics:"{}"});await rqCPut("rqcache_"+me.uid,JSON.stringify({since,purge:+pf.purge||0,docs:cd}))}
- prof=Object.keys(pf).length?pf:prof;try{localStorage["rq_seenL_"+me.uid]=Math.max(+localStorage["rq_seenL_"+me.uid]||0,(prof&&prof.newL)||0);window.rqNewL=false;rqDotPaint()}catch(x){}state.stars=starsOf(prof);rqLearned();award=()=>{};localStorage.rq_sync=Date.now();save()}
+ prof=Object.keys(pf).length?pf:prof;try{localStorage["rq_seenL_"+me.uid]=Math.max(+localStorage["rq_seenL_"+me.uid]||0,(prof&&prof.newL)||0);window.rqNewL=false;rqDotPaint()}catch(x){}state.stars=starsOf(prof);rqLearned();award=()=>{};localStorage.rq_sync=Date.now();save();return{n:Object.keys(fresh).length,full:!C,total:Object.keys(docs).length}}
 window.rqRefresh=()=>{if(window.__rqLoad)return;window.__rqLoad=1;
  if(!document.getElementById("rqspinst")){const st=document.createElement("style");st.id="rqspinst";st.textContent="@keyframes rqspin{to{transform:rotate(360deg)}}";document.head.appendChild(st)}
  const ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center";
@@ -170,7 +170,7 @@ window.rqRefresh=()=>{if(window.__rqLoad)return;window.__rqLoad=1;
  const SP='<div style="width:44px;height:44px;margin:0 auto;border:5px solid #dbe4ee;border-top-color:#16a34a;border-radius:50%;animation:rqspin .8s linear infinite"></div>';
  say(SP,"Loading lessons…");document.body.appendChild(ov);
  const end=()=>{window.__rqLoad=0;ov.remove()};
- applyContent().then(()=>{say('<div style="font-size:44px">✅</div>',"Done");setTimeout(()=>{end();try{home()}catch(x){}},900)}).catch(()=>{say('<div style="font-size:44px">⚠️</div>',"Could not get lessons.<br>Check your internet.");setTimeout(end,2200)})};
+ applyContent().then(r=>{const m=!r?"":r.full?"<div style='font-size:14px;font-weight:400;margin-top:6px'>All "+r.total+" downloaded</div>":r.n?"<div style='font-size:14px;font-weight:400;margin-top:6px'>"+r.n+" new or changed</div>":"<div style='font-size:14px;font-weight:400;margin-top:6px'>Nothing new</div>";say('<div style="font-size:44px">✅</div>',"Done"+m);setTimeout(()=>{end();try{home()}catch(x){}},r&&!r.full&&r.n===0?1200:1800)}).catch(()=>{say('<div style="font-size:44px">⚠️</div>',"Could not get lessons.<br>Check your internet.");setTimeout(end,2200)})};
 /* ---- Part B: open a student's progress, per-student unlocks, locked stars ---- */
 let VIEW=null;
 const starsOf=v=>{try{return v.stars?JSON.parse(v.stars):JSON.parse(JSON.stringify(defaults.stars))}catch(x){return JSON.parse(JSON.stringify(defaults.stars))}};
