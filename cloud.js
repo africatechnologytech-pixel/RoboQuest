@@ -181,7 +181,11 @@ window.rqViewStudent=id=>U(id).get().then(d=>{const v=d.data();let st={};try{st=
  if(!VIEW)VIEW={keepState:state,keepSave:save};VIEW.id=id;VIEW.name=v.name;state=s2;relink();
  save=()=>{U(id).update({stars:JSON.stringify(state.stars)}).then(banner).catch(()=>alert("Could not save the stars."))};hide();banner();progress()});
 window.rqViewing=()=>VIEW;
-window.rqDeletePub=id=>{if(!id||!db||!prof||prof.role!=="teacher"||VIEW)return;db.collection("content").doc(id).delete().then(rqPurgeAll).catch(()=>{})};
+let rqFD=0;
+function rqPdel(v){const k="rq_pdel_"+(me&&me.uid);try{if(v)localStorage[k]=JSON.stringify(v);return JSON.parse(localStorage[k]||"[]")}catch(x){return[]}}
+function rqFlushDel(){if(rqFD||!db||!prof||prof.role!=="teacher"||VIEW||!me)return;const L=rqPdel();if(!L.length)return;rqFD=1;Promise.all(L.map(id=>db.collection("content").doc(id).delete())).then(()=>db.collection("users").where("class","==",prof.class).get()).then(q=>{const w=[];q.forEach(d=>{if((d.data()||{}).role==="student")w.push(U(d.id).update({purge:Date.now()}))});return Promise.all(w)}).then(()=>{rqPdel(rqPdel().filter(i=>L.indexOf(i)<0))}).catch(()=>{}).then(()=>{rqFD=0;if(rqPdel().length&&navigator.onLine!==false)setTimeout(rqFlushDel,5000)})}
+window.addEventListener("online",()=>setTimeout(rqFlushDel,1500));setInterval(rqFlushDel,60000);setTimeout(rqFlushDel,4000);
+window.rqDeletePub=id=>{if(!id||!db||!prof||prof.role!=="teacher"||VIEW)return;const L=rqPdel();if(L.indexOf(id)<0)L.push(id);rqPdel(L);rqFlushDel()};
 window.rqLearn=(c,i,p,w)=>{if(!VIEW)return;const x=comps(w)[c][i];if(!x.pid){alert("This lesson has no id yet.");return}const on=!x.done;U(VIEW.id).update({["learned."+x.pid]:on?true:firebase.firestore.FieldValue.delete()}).then(()=>{x.done=on;component(c,i,p,w);banner()}).catch(()=>alert("Could not save. Check your internet."))};
 window.rqBackView=()=>{if(VIEW){state=VIEW.keepState;relink();save=VIEW.keepSave;VIEW=null}const b=$("rqban");if(b)b.remove();document.body.style.paddingTop="";const vo=$("rqvo");if(vo)vo.remove();try{home()}catch(x){}teacherPanel()};
 window.rqUnlocks=()=>{show("<h2>Loading…</h2>");db.collection("content").get().then(q=>{const rows=[];q.forEach(d=>{const v=d.data(),on=v.all||(v.to||[]).includes(VIEW.id);if(v.kind==="arenaov")return;rows.push(`<label style="display:block;margin:10px 0;line-height:1.3"><input type="checkbox" ${v.all?"disabled":""} ${on?"checked":""} onchange="rqTog('${d.id}',this.checked)"> ${e(v.title)}${v.all?' <span style="opacity:.6">(all students)</span>':""}</label>`)});
