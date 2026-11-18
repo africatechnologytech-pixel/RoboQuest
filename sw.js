@@ -1,4 +1,4 @@
-const VER="AFT 2.0",CACHE="roboquest-v151",MEDIA="roboquest-media";
+const VER="AFT 2.0",CACHE="roboquest-v152",MEDIA="roboquest-media";
 const VIDEO="Video.Guru_20261004_044522845.mp4";
 const SHELL=["./","index.html","icons.js?v=47","firebase-config.js?v=37","cloud.js?v=53","manifest.json","privacy.txt","mcu-logo.png"];
 self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.open(CACHE);
