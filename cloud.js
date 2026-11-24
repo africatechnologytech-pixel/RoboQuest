@@ -241,7 +241,7 @@ window.rqSendProj=async i=>{const p=state.projects[i];if(!p)return;const aid=win
  const id=subId(aid,me.uid,uidOf(p));msg("Sending…");
  try{await db.collection("subdata").doc(id).set({uid:me.uid,class:prof.class,data});
   const up={pname:p.name||"Project",ptype:p.type,ts:Date.now(),name:prof.name||""};
-  try{await db.collection("submissions").doc(id).update(up)}catch(x){if(x&&x.code==="not-found")await db.collection("submissions").doc(id).set(Object.assign({uid:me.uid,class:prof.class,aid,atitle:a?a.title:"",score:null,comment:"",marked:0},up));else throw x}
+  try{await db.collection("submissions").doc(id).update(up)}catch(x){if(x&&(x.code==="not-found"||x.code==="permission-denied"))await db.collection("submissions").doc(id).set(Object.assign({uid:me.uid,class:prof.class,aid,atitle:a?a.title:"",score:null,comment:"",marked:0},up));else throw x}
   alert("Sent to your teacher! ✅");rqAssign()}catch(x){msg("Could not send. Check your internet. ("+(x.code||x.message)+")")}};
 /* teacher: assignments */
 window.rqAsgHome=()=>{window.rqAsgDot=false;try{rqDotPaint()}catch(x){}show(LOAD);Promise.all([db.collection("assignments").where("class","==",prof.class).get(),db.collection("submissions").where("class","==",prof.class).get()]).then(([aq,sq])=>{
@@ -267,7 +267,7 @@ window.rqMark=id=>{if(!SC){msg("Tap a score from 1 to 10 first.");return}const c
 window.rqSubDel=async id=>{if(!confirm("Delete this project and its mark?"))return;try{await db.collection("subdata").doc(id).delete();await db.collection("submissions").doc(id).delete();delete SUBS[id]}catch(x){alert("Could not delete.");return}rqSubs(window.RQAF)};
 /* student: look at the teacher's project (view only, nothing is kept) */
 function lkBar(){let b=$("rqrv");if(!b){b=document.createElement("div");b.id="rqrv";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:9500;background:#1e293b;color:#fff;padding:8px 56px 8px 10px;font-size:14px";document.body.appendChild(b)}
- b.innerHTML=`<b>👀 ${e(RV.pname)}</b> · <i>view only: you can run it, but not change it</i><br><button onclick="rqLookEnd()" style="padding:6px 10px;margin-top:4px">← Back to my assignment</button>`;document.body.style.paddingTop="84px";if(!$("rqvo")){const st=document.createElement("style");st.id="rqvo";st.textContent="#sv{pointer-events:none!important}.shopwrap,#spanel,#maptop{display:none!important}";document.head.appendChild(st)}}
+ b.innerHTML=`<b>👀 ${e(RV.pname)}</b> · <i>view only: you can run it, but not change it</i><br><button onclick="rqLookEnd()" style="padding:6px 10px;margin-top:4px">← Back to my assignment</button>`;document.body.style.paddingTop="84px";if(!$("rqvo")){const st=document.createElement("style");st.id="rqvo";st.textContent="#sv{pointer-events:none!important}.simtop,.modebar,.cmdbar,.simbar,#spanel,#maptop,.shopwrap>*:not(#runbtn),.shopwrap .shopbar{display:none!important}";document.head.appendChild(st)}}
 window.rqLook=aid=>{const a=ASG.find(z=>z.id===aid);if(!a||!a.proj)return;let x;try{x=JSON.parse(a.proj)}catch(z){return}if(!x.projects||!x.projects.length)return;const s2=JSON.parse(JSON.stringify(defaults));s2.projects=x.projects;
  if(!RV)RV={keepState:state,keepSave:save};RV.pname=a.pname||a.title;state=s2;relink();save=()=>{};hide();lkBar();openProject(0)};
 window.rqLookEnd=()=>{if(RV){try{if(sim)sim.run=false}catch(x){}state=RV.keepState;relink();save=RV.keepSave;RV=null}const b=$("rqrv");if(b)b.remove();const vo=$("rqvo");if(vo)vo.remove();document.body.style.paddingTop="";try{home()}catch(x){}rqAssign()};
