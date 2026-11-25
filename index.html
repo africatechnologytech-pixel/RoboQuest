@@ -165,7 +165,7 @@ body.ls .rotmsg{display:none}}
 <script>window.addEventListener("error",function(e){if(window.RQ_OLD)return;var d=document.getElementById("errbar");if(!d){d=document.createElement("div");d.id="errbar";d.style.cssText="position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;padding:10px;border-radius:12px;font:13px sans-serif;white-space:pre-wrap;max-height:40vh;overflow:auto";d.onclick=function(){d.remove()};document.body.appendChild(d)}var t=d.textContent.replace(/ - tap to close$/,"");if(t.split("\n").length<4)d.textContent=(t?t+"\n":"")+"⚠️ "+e.message+" (line "+e.lineno+")";d.textContent+=" - tap to close"});
 const BT={btn:"bt-battlebtn.jpg",bandana:"bt-bandana.jpg",banner:"bt-banner.jpg",win:"bt-win.jpg",lose:"bt-lose.jpg",box:"bt-box.jpg"};
 
-let KEY="roboquest_v1";
+let KEY="roboquest_v1";try{const _u=localStorage.rq_ok;if(_u&&localStorage.getItem("roboquest_v1_"+_u)!==null)KEY="roboquest_v1_"+_u}catch(e){}
 const defaults={
  child:"Inventor",
  stars:Array.from({length:5},()=>Array.from({length:4},()=>[false,false,false,false,false])),
@@ -195,7 +195,7 @@ const WORLD={e:{name:"Electronics",icon:"⚡",cats:cats,icons:icons,sub:{},ck:"c
 function comps(w){return state[WORLD[w].ck]}
 let treeOpen={},ed=null,qw="e";
 function clone(x){return JSON.parse(JSON.stringify(x))}
-function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(!x)return clone(defaults);const s=Object.assign(clone(defaults),x);if(!Array.isArray(s.stars[0][0]))s.stars=[s.stars].concat(clone(defaults.stars).slice(1));if(!s.stats)s.stats={answered:0,correct:0};if(!s.mcomponents)s.mcomponents={};["Build It!","Make It Move!","Power It Up!","Join It!","Mechanism Magic!"].forEach(c=>{if(!s.mcomponents[c])s.mcomponents[c]=[]});if(!s.mquizzes)s.mquizzes=[];if(!s.qpos)s.qpos={e:0,m:0};if(!s.arenas||!s.arenas.length)s.arenas=[{id:"a1",name:"The Heavy Box Arena",story:"A heavy box is stuck at point A. Build a machine that can push it to point B before time runs out!",mass:2,dist:4,time:6,fric:0.3}];return s}catch(e){return clone(defaults)}}
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(!x)return clone(defaults);const s=Object.assign(clone(defaults),x);if(!Array.isArray(s.stars[0][0]))s.stars=[s.stars].concat(clone(defaults.stars).slice(1));if(!s.stats)s.stats={answered:0,correct:0};if(!s.mcomponents)s.mcomponents={};["Build It!","Make It Move!","Power It Up!","Join It!","Mechanism Magic!"].forEach(c=>{if(!s.mcomponents[c])s.mcomponents[c]=[]});if(!s.mquizzes)s.mquizzes=[];if(!s.qpos)s.qpos={e:0,m:0};if(!s.arenas||!s.arenas.length)s.arenas=[{id:"a1",name:"The Heavy Box Arena",story:"A heavy box is stuck at point A. Build a machine that can push it to point B before time runs out!",mass:2,dist:4,time:6,fric:0.3}];return s}catch(e){try{const raw=localStorage.getItem(KEY);if(raw&&!localStorage.rq_bad)localStorage.setItem("rq_bad",raw)}catch(x){}return clone(defaults)}}
 function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function lname(l){return `Level ${l+1}`}
 function rname(l,r){const n=state.rankNames&&state.rankNames[l]&&state.rankNames[l][r];return (n&&n.trim())||ranks[r]}
@@ -304,7 +304,7 @@ function qReview(w,id){qw=w;qset=id;const s=qFind(w,id);if(!s)return quiz(w);con
 function qRe(qi,k){const s=qFind(qw,qset);if(!s)return;const y=window.scrollY;qPut(s.qs[qi],k);qReview(qw,qset);window.scrollTo(0,y)}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v175";
+const RQCACHE="roboquest-v177";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=37").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -1919,6 +1919,6 @@ about=function(){el("screen").innerHTML=nav()+hero('car','📖 About RoboQuest',
  <div class="card"><h3>Credits</h3><p>Created by Afro Technology, with the assistance of AI.</p><p>Built with Firebase and Google services.</p><p style="opacity:.7;font-size:13px">Version ${RQAPPV}<br>© 2026 Afro Technology. All rights reserved.</p></div>`};
 })();
 </script>
-<script src="icons.js?v=47"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=37"></script><script src="cloud.js?v=61">
+<script src="icons.js?v=47"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=37"></script><script src="cloud.js?v=62">
 </script></body>
 </html>
