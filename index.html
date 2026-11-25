@@ -285,9 +285,9 @@ function qSync(){state.qans=state.qans||{};state.qok={};let n=0,c=0;["e","m"].fo
 function qPut(q,i){state.qans=state.qans||{};const was=qAns(q),k=qKey(q);state.qans[k]=i;if(was!==undefined&&was===q.correct&&i!==q.correct)delete (state.qok||{})[k];qSync();save()}
 let qset="_g",qsi=0;
 function qFind(w,id){return qSets(w).find(s=>s.id===id)}
-function quiz(w="e"){qw=w;const S=qSets(w);if(!S.length){el("screen").innerHTML=nav()+`<button onclick="worldEnter('${w}')">← ${esc(WORLD[w].name)}</button><div class="card"><h2>❓ Quiz</h2><p>No questions yet. Ask the teacher to add some.</p></div>`;return}
+function quiz(w="e"){qw=w;try{window.rqLessonCheck&&rqLessonCheck()}catch(e){}const S=qSets(w);if(!S.length){el("screen").innerHTML=nav()+`<button onclick="worldEnter('${w}')">← ${esc(WORLD[w].name)}</button><div class="card"><h2>❓ Quiz</h2><p>No questions yet. Ask the teacher to add some.</p></div>`;return}
  el("screen").innerHTML=nav()+`<button onclick="worldEnter('${w}')">← ${esc(WORLD[w].name)}</button>${hero('think','❓ Quiz','Choose a set of questions.','#dbeafe')}`+S.map(s=>{const st=qStat(s),sub=st.done?`<span style="color:#14532d;font-weight:800">✅ Completed · ${st.c} of ${st.t} right</span>`:st.n?`${st.n} of ${st.t} answered`:"Not started",bt=st.done?"Check my answers":st.n?"Continue":"Start";
-  return `<div class="card"><h3 style="margin:0 0 4px">${esc(s.name)}</h3><p class="muted" style="margin:0 0 6px">${st.t} question${st.t>1?"s":""}</p><p style="margin:0 0 8px">${sub}</p><button class="primary" style="margin:0" onclick="qOpen('${w}','${s.id}')">${bt}</button>${st.done?` <button style="margin:0" onclick="qRetry('${w}','${s.id}')">🔄 Retry</button>`:""}</div>`}).join("")}
+  return `<div class="card"><h3 style="margin:0 0 4px">${esc(s.name)}</h3><p class="muted" style="margin:0 0 6px">${st.t} question${st.t>1?"s":""}</p><p style="margin:0 0 8px">${sub}</p><button class="primary" style="margin:0" onclick="qOpen('${w}','${s.id}')">${bt}</button>${st.done?` <button style="margin:0" onclick="qRetry('${w}','${s.id}')">🔄 Retry</button>`:""}${localStorage.rq_role==="teacher"&&window.rqDeletePub?` <button style="margin:0;border:2px solid #ef4444;color:#b91c1c;background:#fff" onclick="qDelSet('${w}','${s.id}')">🗑️ Delete set</button>`:""}</div>`}).join("")}
 function qFirst(s){const i=s.qs.findIndex(q=>qAns(q)===undefined);return i<0?s.qs.length:i}
 function qOpen(w,id){qw=w;qset=id;const s=qFind(w,id);if(!s)return quiz(w);if(qStat(s).done)return qReview(w,id);qShow(Math.min(qFirst(s),s.qs.length-1))}
 function qShow(i){const w=qw,s=qFind(w,qset);if(!s)return quiz(w);const f=qFirst(s);if(f>=s.qs.length&&i>=s.qs.length)return qDone(w,qset);i=Math.max(0,Math.min(i,s.qs.length-1));qsi=i;const q=s.qs[i],a=qAns(q),t=s.qs.length;
@@ -304,7 +304,7 @@ function qReview(w,id){qw=w;qset=id;const s=qFind(w,id);if(!s)return quiz(w);con
 function qRe(qi,k){const s=qFind(qw,qset);if(!s)return;const y=window.scrollY;qPut(s.qs[qi],k);qReview(qw,qset);window.scrollTo(0,y)}
 function battle(){el("screen").innerHTML=nav()+`<div class="card"><h2>⚔️ Battle Mode</h2><p>Battle Mode is kept aside for now. We will expand it later.</p></div>`}
 home();
-const RQCACHE="roboquest-v172";
+const RQCACHE="roboquest-v173";
 function updBar(w,v){if(document.getElementById("rqupd"))return;const b=document.createElement("div");b.id="rqupd";b.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#84cc16;color:#1a2e05;padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 4px 16px #0005";b.textContent=(typeof v!=="undefined"&&v)?"🔄 Version "+v+" is ready. Tap to update.":"🔄 A new version is ready. Tap to update.";b.onclick=()=>{b.textContent="Updating…";try{localStorage.rq_upd=v||""}catch(e){}w.postMessage("skip");setTimeout(()=>location.reload(),5000)};document.body.appendChild(b)}
 try{const uv=localStorage.rq_upd;if(uv!==null&&uv!==undefined){localStorage.removeItem("rq_upd");const t=document.createElement("div");t.style.cssText="position:fixed;left:10px;right:10px;bottom:78px;z-index:9600;background:#1e293b;color:#fff;padding:12px;border-radius:12px;text-align:center";t.textContent=uv?"✅ V"+uv+" complete":"Updated ✅";document.body.appendChild(t);setTimeout(()=>t.remove(),3500)}}catch(e){}
 try{if("serviceWorker" in navigator&&location.protocol.startsWith("http")){const had=!!navigator.serviceWorker.controller;let rl=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!rl){rl=true;location.reload()}});navigator.serviceWorker.register("sw.js?v=37").then(reg=>{const chk=()=>{const w=reg.waiting;if(!w||!navigator.serviceWorker.controller)return;const ch=new MessageChannel();ch.port1.onmessage=ev=>{const d=ev.data||{};if(d.c&&d.c!==RQCACHE)updBar(w,d.v)};w.postMessage("ver",[ch.port2])};chk();reg.addEventListener("updatefound",()=>{const n=reg.installing;if(n)n.addEventListener("statechange",()=>{if(n.state==="installed")chk()})});setInterval(()=>reg.update().catch(()=>{}),600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{})}}catch(e){}
@@ -1813,6 +1813,28 @@ function skDraw(){const sv=el("sv");if(!sv)return;const car=sv.querySelector("#c
  car.insertAdjacentHTML("beforeend",skBody(g0,H.skinCol||"#f1f5f9"));[...car.children].forEach(n=>{const a=n.getAttribute&&n.getAttribute("data-mp");if(a&&wid.has(a))car.appendChild(n)})}
 {const _d2=drawM;drawM=function(l){_d2(l);try{skDraw();skUi(l);if(!l)bpPanel()}catch(e){}}}
 {const _ds2=drawSim;drawSim=function(){const r=_ds2.apply(this,arguments);try{bpPanel()}catch(e){}return r}}
+/* ===== BACK BUTTON: step back through screens; on Home press twice to exit ===== */
+{const NS=[];let nsD=0,exitT=0,armed=0,pushed=0;window.RQQ=false;
+ function nsPush(n,a){window.RQQ=false;if(n==="home")NS.length=0;const t=NS[NS.length-1];if(t&&t.n===n)NS[NS.length-1]={n,a};else NS.push({n,a});if(NS.length>40)NS.shift()}
+ ["home","progress","worldHome","category","component","about","teacher","quiz","qDone","qReview","battle","simulation","mechatronics","mbattle","arenaScreen"].forEach(n=>{const f=window[n];if(typeof f!=="function")return;window[n]=function(){const a=[].slice.call(arguments);if(nsD===0)nsPush(n,a);nsD++;try{return f.apply(this,a)}finally{nsD--}}});
+ {const q0=window.qShow;window.qShow=function(){window.RQQ=true;return q0.apply(this,arguments)}}
+ window.rqCurScreen=()=>window.RQQ?"qShow":(NS[NS.length-1]||{n:"home"}).n;
+ window.rqSyncUi=()=>{try{const c=rqCurScreen();if(c==="qShow"||c==="qDone"||c==="qReview"){if(!qFind(qw,qset))quiz(qw)}else if(c==="quiz")quiz(qw);else if(c==="home")home()}catch(e){}};
+ function toast(t){let b=document.getElementById("rqexit");if(b)b.remove();b=document.createElement("div");b.id="rqexit";b.textContent=t;b.style.cssText="position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#0f2a44;color:#fff;padding:12px 20px;border-radius:24px;font:700 16px system-ui,sans-serif;z-index:99999;box-shadow:0 4px 14px #0007";document.body.appendChild(b);setTimeout(()=>{if(b.parentNode)b.remove()},2200)}
+ function closeOverlay(){for(const id of ["skpick","bpov","shinfo","mcpop","pop","mpick"]){const d=document.getElementById(id);if(d){d.remove();return true}}return window.rqBackOv?!!window.rqBackOv():false}
+ function goBack(){if(closeOverlay())return true;const sc=document.getElementById("screen");
+  if(sc){const fb=sc.querySelector(".fhead button");if(fb){fb.click();return true}const sv=document.getElementById("sv");if(sv&&document.getElementById("swrap")&&sc.contains(sv)&&typeof sim!=="undefined"&&sim&&sim.p){try{closeProject()}catch(e){}return true}}
+  if(window.RQQ){quiz(qw);return true}
+  if(NS.length>1){NS.pop();const t=NS[NS.length-1];window[t.n].apply(null,t.a);return true}
+  return false}
+ function arm(){if(armed)return;armed=1;try{history.pushState({rq:1},"");pushed=1}catch(e){}}
+ ["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,arm,{once:true,passive:true}));
+ window.addEventListener("popstate",()=>{if(!armed)return;if(goBack()){try{history.pushState({rq:1},"")}catch(e){}return}
+  const now=Date.now();if(now-exitT<2300){exitT=0;armed=0;try{window.close()}catch(e){}return}
+  exitT=now;toast("Press back again to exit");try{history.pushState({rq:1},"")}catch(e){}})
+}
+function qDelSet(w,id){const s=qFind(w,id);if(!s)return;if(!confirm('Delete the whole set "'+s.name+'" ('+s.qs.length+' question'+(s.qs.length>1?"s":"")+')?\n\nIt will also be removed from your students\' phones.'))return;const k=WORLD[w].qk;s.qs.forEach(q=>{const i=state[k].indexOf(q);if(i>=0)state[k].splice(i,1);try{window.rqDeletePub&&rqDeletePub(q.pid)}catch(e){}});save();quiz(w)}
+
 </script>
 <script>
 /* AFT 2.0: privacy policy (text lives in privacy.txt so it can be edited on GitHub), About page, login-screen link and sign-up tick box */
@@ -1842,6 +1864,6 @@ about=function(){el("screen").innerHTML=nav()+hero('car','📖 About RoboQuest',
  <div class="card"><h3>Credits</h3><p>Created by Afro Technology, with the assistance of AI.</p><p>Built with Firebase and Google services.</p><p style="opacity:.7;font-size:13px">Version ${RQAPPV}<br>© 2026 Afro Technology. All rights reserved.</p></div>`};
 })();
 </script>
-<script src="icons.js?v=47"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=37"></script><script src="cloud.js?v=59">
+<script src="icons.js?v=47"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js?v=37"></script><script src="cloud.js?v=60">
 </script></body>
 </html>
