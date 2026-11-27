@@ -1,7 +1,7 @@
-const VER="AFT 2.0",CACHE="roboquest-v180",MEDIA="roboquest-media";
+const VER="AFT 2.0",CACHE="roboquest-v181",MEDIA="roboquest-media";
 const VIDEO="Video.Guru_20261004_044522845.mp4";
 const FB=["https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js","https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js","https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"];
-const SHELL=["./","index.html","icons.js?v=47","firebase-config.js?v=37","cloud.js?v=62","manifest.json","privacy.txt","mcu-logo.png"];
+const SHELL=["./","index.html","icons.js?v=47","firebase-config.js?v=37","cloud.js?v=62","manifest.json","privacy.txt","mcu-logo.png","av-think.png","quiz-good.webp","quiz-bad.webp"];
 self.addEventListener("install",e=>{e.waitUntil((async()=>{const c=await caches.open(CACHE);
   await Promise.all(SHELL.map(async u=>{try{const r=await fetch(new Request(u+(u.indexOf("?")<0?"?":"&")+"cb="+CACHE,{cache:"reload"}));if(r.ok)await c.put(new Request(u),r)}catch(x){if(u==="index.html"||u==="./")throw x}}));
   await Promise.all(FB.map(async u=>{try{if(!(await c.match(u))){const r=await fetch(u,{mode:"no-cors"});await c.put(u,r)}}catch(x){}}));
