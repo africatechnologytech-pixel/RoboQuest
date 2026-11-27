@@ -1,4 +1,4 @@
-const VER="AFT 2.0",CACHE="roboquest-v179",MEDIA="roboquest-media";
+const VER="AFT 2.0",CACHE="roboquest-v180",MEDIA="roboquest-media";
 const VIDEO="Video.Guru_20261004_044522845.mp4";
 const FB=["https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js","https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js","https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"];
 const SHELL=["./","index.html","icons.js?v=47","firebase-config.js?v=37","cloud.js?v=62","manifest.json","privacy.txt","mcu-logo.png"];
